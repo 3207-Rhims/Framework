@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Company Data | Company Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-bar">
+        <div class="brand">Company Portal</div>
+        <div class="nav-actions">
+          <div class="pill">
+            <span class="pill-icon">👤</span>
+            Welcome, User
+          </div>
+          <button class="btn btn-ghost">
+            <span class="btn-icon">→</span>
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="data-page">
+      <section class="data-header container">
+        <div>
+          <h1 id="companyTitle">Company Data</h1>
+          <p class="section-copy">Manage your company information</p>
+        </div>
+        <a class="btn btn-ghost" href="company-type.html">Back to Selection</a>
+      </section>
+
+      <section class="data-table container">
+        <div class="table-toolbar">
+          <div class="search">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Search..." />
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn btn-primary small">Policy Engine</button>
+            <button class="btn btn-gradient small">Profile Recommender</button>
+            <button class="btn btn-dark small">＋ Add Row</button>
+            <button class="btn btn-ghost small">Import</button>
+            <button class="btn btn-ghost small">Export</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div id="companyTable"></div>
+        </div>
+      </section>
+    </main>
+
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"
+    ></script>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const type = params.get("type");
+      const title = document.getElementById("companyTitle");
+      if (type) {
+        title.textContent = `${type} Company Data`;
+      }
+
+      const tableData = Array.from({ length: 8 }, (_, index) => ({
+        id: index + 1,
+        colA: "",
+        colB: "",
+        colC: "",
+        colD: "",
+        colE: "",
+        colF: "",
+        colG: "",
+        colH: "",
+      }));
+
+      const table = new Tabulator("#companyTable", {
+        data: tableData,
+        layout: "fitColumns",
+        height: "520px",
+        columns: [
+          { title: "#", field: "id", width: 60, hozAlign: "center" },
+          { title: "Column A", field: "colA", editor: "input" },
+          { title: "Column B", field: "colB", editor: "input" },
+          { title: "Column C", field: "colC", editor: "input" },
+          { title: "Column D", field: "colD", editor: "input" },
+          { title: "Column E", field: "colE", editor: "input" },
+          { title: "Column F", field: "colF", editor: "input" },
+          { title: "Column G", field: "colG", editor: "input" },
+          { title: "Column H", field: "colH", editor: "input" },
+        ],
+      });
+
+      const searchInput = document.querySelector(".search input");
+      searchInput.addEventListener("input", (event) => {
+        const value = event.target.value.trim();
+        if (!value) {
+          table.clearFilter();
+          return;
+        }
+        table.setFilter((data) => {
+          return Object.values(data).some((cell) =>
+            String(cell).toLowerCase().includes(value.toLowerCase())
+          );
+        });
+      });
+    </script>
+  </body>
+</html>

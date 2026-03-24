@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Company Type | Company Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-bar">
+        <div class="brand">Company Portal</div>
+        <div class="nav-actions">
+          <div class="pill">
+            <span class="pill-icon">👤</span>
+            Welcome, User
+          </div>
+          <button class="btn btn-ghost">
+            <span class="btn-icon">→</span>
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="selector">
+        <div class="container">
+          <h1>
+            What kind of company do you have?
+            <span class="badge">📘</span>
+          </h1>
+          <p class="section-copy">
+            Select your company type to get started with tailored data management
+          </p>
+
+          <div class="company-grid">
+            <a class="company-card" href="company-data.html?type=Retail">
+              <div class="icon-circle icon-blue">
+                <span>🛍️</span>
+              </div>
+              <h3>Retail</h3>
+              <p>Click to manage your retail data</p>
+            </a>
+
+            <a class="company-card" href="company-data.html?type=Manufacturing">
+              <div class="icon-circle icon-green">
+                <span>🏭</span>
+              </div>
+              <h3>Manufacturing</h3>
+              <p>Click to manage your manufacturing data</p>
+            </a>
+
+            <a class="company-card" href="company-data.html?type=Technology">
+              <div class="icon-circle icon-purple">
+                <span>💻</span>
+              </div>
+              <h3>Technology</h3>
+              <p>Click to manage your technology data</p>
+            </a>
+
+            <a class="company-card" href="company-data.html?type=Corporate">
+              <div class="icon-circle icon-orange">
+                <span>🏢</span>
+              </div>
+              <h3>Corporate</h3>
+              <p>Click to manage your corporate data</p>
+            </a>
+
+            <a class="company-card" href="company-data.html?type=Consulting">
+              <div class="icon-circle icon-red">
+                <span>💼</span>
+              </div>
+              <h3>Consulting</h3>
+              <p>Click to manage your consulting data</p>
+            </a>
+
+            <a class="company-card" href="company-data.html?type=Services">
+              <div class="icon-circle icon-teal">
+                <span>🧑‍🤝‍🧑</span>
+              </div>
+              <h3>Services</h3>
+              <p>Click to manage your services data</p>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,144 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: company-portal\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-27 00:00+0000\n"
+"PO-Revision-Date: 2026-02-27 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "MIRAI Sheild"
+msgstr "MIRAI Sheild"
+
+msgid "Log In"
+msgstr "ログイン"
+
+msgid "Sign Up"
+msgstr "サインアップ"
+
+msgid "Logout"
+msgstr "ログアウト"
+
+msgid "A framework for Quantum-Resilient Protection for Industrial Systems."
+msgstr "産業システム向けの量子耐性保護フレームワーク。"
+
+msgid "Manage Your Company Data"
+msgstr "会社データを管理"
+
+msgid "Seamlessly & Efficiently"
+msgstr "スムーズかつ効率的に"
+
+msgid "The all-in-one platform for organizing, tracking, and managing your business information with powerful Excel-like tables"
+msgstr "強力なExcelライクな表で、ビジネス情報の整理・追跡・管理を行うオールインワンプラットフォーム"
+
+msgid "Get Started Free"
+msgstr "無料で始める"
+
+msgid "Watch Demo"
+msgstr "デモを見る"
+
+msgid "Why Choose Our Platform?"
+msgstr "なぜ私たちのプラットフォームを選ぶのか？"
+
+msgid "Built for modern businesses that need powerful data management without the complexity"
+msgstr "複雑さを排除しつつ強力なデータ管理が必要な現代の企業向け"
+
+msgid "Multi-Company Support"
+msgstr "複数企業対応"
+
+msgid "Manage multiple companies with separate data tables and workflows"
+msgstr "複数企業を個別のデータ表とワークフローで管理"
+
+msgid "Excel-Like Tables"
+msgstr "Excelライクな表"
+
+msgid "Familiar spreadsheet interface with powerful data entry capabilities"
+msgstr "使い慣れたスプレッドシートUIと強力なデータ入力"
+
+msgid "Easy Collaboration"
+msgstr "簡単な共同作業"
+
+msgid "Share and collaborate with your team in real-time"
+msgstr "チームとリアルタイムに共有・共同作業"
+
+msgid "Secure & Reliable"
+msgstr "安全で信頼性"
+
+msgid "Your data is protected with enterprise-grade security"
+msgstr "エンタープライズ級のセキュリティでデータを保護"
+
+msgid "Ready to Get Started?"
+msgstr "始める準備はできましたか？"
+
+msgid "Join thousands of businesses already managing their data efficiently"
+msgstr "すでに多くの企業が効率的にデータを管理しています"
+
+msgid "Start Managing Your Data"
+msgstr "データ管理を開始"
+
+msgid "What kind of company do you have?"
+msgstr "どの種類の会社ですか？"
+
+msgid "Select your company type to get started with tailored data management"
+msgstr "会社タイプを選んで、最適化されたデータ管理を開始"
+
+msgid "Click to manage your %(company_name)s data"
+msgstr "%(company_name)s のデータを管理"
+
+msgid "Manage your company information"
+msgstr "会社情報を管理"
+
+msgid "Back to Selection"
+msgstr "選択に戻る"
+
+msgid "Search..."
+msgstr "検索..."
+
+msgid "Policy Engine"
+msgstr "ポリシーエンジン"
+
+msgid "Profile Recommender"
+msgstr "プロファイル推奨"
+
+msgid "Utility Score"
+msgstr "ユーティリティスコア"
+
+msgid "Add Row"
+msgstr "行を追加"
+
+msgid "Load Sample"
+msgstr "サンプルを読み込み"
+
+msgid "Import"
+msgstr "インポート"
+
+msgid "Export"
+msgstr "エクスポート"
+
+msgid "Clear Table"
+msgstr "表をクリア"
+
+msgid "Access your company dashboards."
+msgstr "会社のダッシュボードにアクセスします。"
+
+msgid "No account?"
+msgstr "アカウントがありませんか？"
+
+msgid "Create one"
+msgstr "作成する"
+
+msgid "Create an Account"
+msgstr "アカウントを作成"
+
+msgid "Start managing your company data in minutes."
+msgstr "数分で会社データの管理を開始"
+
+msgid "Already have an account?"
+msgstr "すでにアカウントをお持ちですか？"
+
+msgid "Log in"
+msgstr "ログイン"

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Select Company | Company Portal{% endblock %}
+
+{% block content %}
+  <section class="selector">
+    <div class="container">
+      <h1>
+        {% trans "What kind of company do you have?" %}
+        <span class="badge">📘</span>
+      </h1>
+      <p class="section-copy">
+        {% trans "Select your company type to get started" %}
+      </p>
+
+      <div class="company-grid">
+        {% for company in company_types %}
+          <a class="company-card" href="{% url 'company-data' company.slug %}">
+            <div class="icon-circle {% cycle 'icon-blue' 'icon-green' 'icon-purple' 'icon-orange' 'icon-red' 'icon-teal' %}">
+              <span>
+                {% if company.slug == 'retail' %}🛍️{% elif company.slug == 'manufacturing' %}🏭{% elif company.slug == 'technology' %}💻{% elif company.slug == 'corporate' %}🏢{% elif company.slug == 'consulting' %}💼{% else %}🧑‍🤝‍🧑{% endif %}
+              </span>
+            </div>
+            <h3>{{ company.name }}</h3>
+            <p>{% blocktrans with company_name=company.name|lower %}Click to manage your {{ company_name }} data{% endblocktrans %}</p>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

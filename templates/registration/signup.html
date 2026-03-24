@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}Sign Up | Company Portal{% endblock %}
+
+{% block content %}
+  <section class="auth">
+    <div class="container auth-card">
+      <h1>{% trans "Create an Account" %}</h1>
+      <p class="section-copy">{% trans "Start managing your company data in minutes." %}</p>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn btn-dark" type="submit">{% trans "Sign Up" %}</button>
+      </form>
+      <p class="auth-footer">
+        {% trans "Already have an account?" %} <a href="{% url 'login' %}">{% trans "Log in" %}</a>
+      </p>
+    </div>
+  </section>
+{% endblock %}

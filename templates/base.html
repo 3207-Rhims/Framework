@@ -1,0 +1,55 @@
+{% load static i18n %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}MIRAI Sheild{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-bar">
+        <div class="brand">{% trans "MIRAI Sheild" %}</div>
+        <div class="nav-actions">
+          <form class="lang-switch" action="{% url 'set_language' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.path }}" />
+            <button class="btn btn-ghost small" type="submit" name="language" value="en">EN</button>
+            <button class="btn btn-ghost small" type="submit" name="language" value="ja">日本語</button>
+          </form>
+          {% if user.is_authenticated %}
+            <div class="pill">
+              <span class="pill-icon">👤</span>
+              {% blocktrans %}Welcome, {{ user.username }}{% endblocktrans %}
+            </div>
+            <a class="btn btn-ghost" href="{% url 'logout' %}">
+              <span class="btn-icon">→</span>
+              {% trans "Logout" %}
+            </a>
+          {% else %}
+            <a class="btn btn-ghost" href="{% url 'login' %}">
+              <span class="btn-icon">→</span>
+              {% trans "Log In" %}
+            </a>
+            <a class="btn btn-dark" href="{% url 'signup' %}">
+              <span class="btn-icon">👤</span>
+              {% trans "Sign Up" %}
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

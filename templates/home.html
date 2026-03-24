@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}MIRAI Sheild{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <div class="container hero-card">
+      <p class="eyebrow">{% trans "A framework for Quantum-Resilient Protection for Industrial Systems." %}</p>
+      <h1>
+        {% trans "Protect Your Company’s Data in the Quantum Era." %}<br />
+        <span>{% trans "Seamlessly & Efficiently" %}</span>
+      </h1>
+      <p class="hero-copy">
+        {% trans "The all-in-one platform for creating an inventory to make a full migration plan" %}
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="{% if user.is_authenticated %}{% url 'company-select' %}{% else %}{% url 'signup' %}{% endif %}">
+          {% trans "Get Started Free" %}
+          <span class="btn-icon">→</span>
+        </a>
+        <a class="btn btn-outline" href="#features">{% trans "Watch Demo" %}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="container">
+      <h2>{% trans "What type of industry is eligible for this ?" %}</h2>
+      <p class="section-copy">
+        {% trans "All those industry which is based on IIoT" %}
+      </p>
+
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="icon-circle icon-blue">
+            <span>🏢</span>
+          </div>
+          <h3>{% trans "Multiple Companies" %}</h3>
+          <p>
+            {% trans "Manage multiple companies with separate data tables and workflows" %}
+          </p>
+        </article>
+
+        <article class="feature-card">
+          <div class="icon-circle icon-green">
+            <span>📊</span>
+          </div>
+          <h3>{% trans "Excel-Like Tables makes this framework easy" %}</h3>
+          <p>
+            {% trans "Familiar spreadsheet interface with powerful data entry capabilities" %}
+          </p>
+        </article>
+
+        <article class="feature-card">
+          <div class="icon-circle icon-purple">
+            <span>🤝</span>
+          </div>
+          <h3>{% trans "Easy Collaboration" %}</h3>
+          <p>{% trans "Share and collaborate with your team in real-time" %}</p>
+        </article>
+
+        <article class="feature-card">
+          <div class="icon-circle icon-orange">
+            <span>🛡️</span>
+          </div>
+          <h3>{% trans "Secure & Reliable" %}</h3>
+          <p>{% trans "Your data is protected" %}</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container cta-card">
+      <h2>{% trans "Ready to Get Started?" %}</h2>
+      <p>
+        {% trans "Lets protect your companies quantum future" %}
+      </p>
+      <a class="btn btn-dark btn-cta" href="{% if user.is_authenticated %}{% url 'company-select' %}{% else %}{% url 'signup' %}{% endif %}">
+        {% trans "Start Managing Your Data" %}
+        <span class="btn-icon">→</span>
+      </a>
+    </div>
+  </section>
+{% endblock %}
