@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 
 {% block title %}{{ company_type.name }} Company Data | Company Portal{% endblock %}
 
@@ -18,7 +19,45 @@
         <h1 id="companyTitle">{% blocktrans %}{{ company_type.name }} Company Data{% endblocktrans %}</h1>
         <p class="section-copy">{% trans "Manage your company information" %}</p>
       </div>
-      <a class="btn btn-ghost" href="{% url 'company-select' %}">{% trans "Back to Selection" %}</a>
+      <div class="data-header-actions">
+        <details class="manual-menu">
+          <summary class="btn btn-ghost manual-menu-trigger">
+            {% if LANGUAGE_CODE == "ja" %}
+              ユーザーマニュアル
+            {% else %}
+              User Manual
+            {% endif %}
+            <span class="manual-menu-caret">▾</span>
+          </summary>
+          <div class="manual-menu-list">
+            <a class="btn btn-ghost small manual-menu-link" href="{% url 'user-manual' 'en' %}" target="_blank" rel="noopener">
+              {% if LANGUAGE_CODE == "ja" %}英語{% else %}English{% endif %}
+            </a>
+            <a class="btn btn-ghost small manual-menu-link" href="{% url 'user-manual' 'jp' %}" target="_blank" rel="noopener">
+              {% if LANGUAGE_CODE == "ja" %}日本語{% else %}Japanese{% endif %}
+            </a>
+          </div>
+        </details>
+        <details class="manual-menu">
+          <summary class="btn btn-ghost manual-menu-trigger">
+            {% if LANGUAGE_CODE == "ja" %}
+              フルフレームワーク説明
+            {% else %}
+              Full Framework Explanations
+            {% endif %}
+            <span class="manual-menu-caret">▾</span>
+          </summary>
+          <div class="manual-menu-list">
+            <a class="btn btn-ghost small manual-menu-link" href="{% url 'full-framework-explanations' 'en' %}" target="_blank" rel="noopener">
+              {% if LANGUAGE_CODE == "ja" %}英語{% else %}English{% endif %}
+            </a>
+            <a class="btn btn-ghost small manual-menu-link" href="{% url 'full-framework-explanations' 'jp' %}" target="_blank" rel="noopener">
+              {% if LANGUAGE_CODE == "ja" %}日本語{% else %}Japanese{% endif %}
+            </a>
+          </div>
+        </details>
+        <a class="btn btn-ghost" href="{% url 'company-select' %}">{% trans "Back to Selection" %}</a>
+      </div>
     </div>
 
     <div class="data-table container">
@@ -28,10 +67,25 @@
             <input type="text" placeholder="{% trans 'Search...' %}" />
           </div>
         <div class="toolbar-actions">
-          <button class="btn btn-primary small" data-action="policy">{% trans "Policy Engine" %}</button>
-          <button class="btn btn-gradient small" data-action="profile">{% trans "Profile Recommender" %}</button>
+          <div class="workflow-preview">
+            <button class="btn btn-primary small" type="button" data-action="policy">{% trans "Policy Engine" %}</button>
+            <div class="workflow-preview-card" aria-hidden="true" hidden>
+              <img src="{% url 'workflow-image' 'policy' %}" alt="{% trans 'Policy Engine' %}" />
+            </div>
+          </div>
+          <div class="workflow-preview">
+            <button class="btn btn-gradient small" type="button" data-action="profile">{% trans "Profile Recommender" %}</button>
+            <div class="workflow-preview-card" aria-hidden="true" hidden>
+              <img src="{% url 'workflow-image' 'profile' %}" alt="{% trans 'Profile Recommender' %}" />
+            </div>
+          </div>
+          <button class="btn btn-ghost small" type="button" data-action="weights">
+            {% if LANGUAGE_CODE == "ja" %}重み設定{% else %}{% trans "Weights" %}{% endif %}
+          </button>
           <button class="btn btn-dark small" data-action="add-row">＋ {% trans "Add Row" %}</button>
-          <button class="btn btn-ghost small" data-action="expert">{% trans "Expert Feedback" %}</button>
+          <button class="btn btn-ghost small" data-action="expert">
+            {% if LANGUAGE_CODE == "ja" %}専門家フィードバック{% else %}{% trans "Expert Feedback" %}{% endif %}
+          </button>
           <button class="btn btn-dark small" data-action="submit">{% trans "Submit Table" %}</button>
           <button class="btn btn-ghost small" data-action="sample">{% trans "Load Sample" %}</button>
           <button class="btn btn-ghost small" data-action="import">{% trans "Import" %}</button>
@@ -55,6 +109,10 @@
           data-submit-url="{% url 'submit-table' company_type.slug %}"
         ></div>
       </div>
+
+      <div class="weights-status" id="weightsStatus">
+        {% if LANGUAGE_CODE == "ja" %}デフォルトのシステム重みを使用中です。{% else %}Using default system weights.{% endif %}
+      </div>
     </div>
   </section>
 
@@ -62,67 +120,159 @@
     <div class="modal-backdrop"></div>
     <div class="modal-card">
       <div class="modal-header">
-        <h2>{% trans "Expert Feedback Form" %}</h2>
+        <h2>{% if LANGUAGE_CODE == "ja" %}専門家フィードバックフォーム{% else %}{% trans "Expert Feedback Form" %}{% endif %}</h2>
         <button class="btn btn-ghost small" type="button" data-expert-close>×</button>
       </div>
-      <p class="modal-subtitle">{% trans "Row" %}: <span id="expertRowLabel"></span></p>
+      <p class="modal-subtitle">{% if LANGUAGE_CODE == "ja" %}行{% else %}{% trans "Row" %}{% endif %}: <span id="expertRowLabel"></span></p>
       <form id="expertForm">
         <div class="feedback-table">
           <div class="feedback-row feedback-head">
-            <div>{% trans "Criterion" %}</div>
-            <div>{% trans "Appropriate" %}</div>
-            <div>{% trans "Partially Appropriate" %}</div>
-            <div>{% trans "Not Appropriate" %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}評価項目{% else %}{% trans "Criterion" %}{% endif %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}適切{% else %}{% trans "Appropriate" %}{% endif %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}やや適切{% else %}{% trans "Partially Appropriate" %}{% endif %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}不適切{% else %}{% trans "Not Appropriate" %}{% endif %}</div>
           </div>
           <div class="feedback-row" data-criterion="recommended_pqc">
-            <div>{% trans "The recommended PQC algorithm is appropriate for the given scenario context." %}</div>
+            <div>
+              {% if LANGUAGE_CODE == "ja" %}
+                推奨されたPQCアルゴリズムは、このシナリオの文脈に対して適切である。
+              {% else %}
+                {% trans "The recommended PQC algorithm is appropriate for the given scenario context." %}
+              {% endif %}
+            </div>
             <label><input type="radio" name="recommended_pqc" value="Appropriate" /></label>
             <label><input type="radio" name="recommended_pqc" value="Partially appropriate" /></label>
             <label><input type="radio" name="recommended_pqc" value="Not appropriate" /></label>
           </div>
           <div class="feedback-row" data-criterion="deployed_cat">
-            <div>{% trans "The deployed PQC NIST category is appropriate for the given scenario." %}</div>
+            <div>
+              {% if LANGUAGE_CODE == "ja" %}
+                適用されたPQCのNISTカテゴリは、このシナリオに対して適切である。
+              {% else %}
+                {% trans "The deployed PQC NIST category is appropriate for the given scenario." %}
+              {% endif %}
+            </div>
             <label><input type="radio" name="deployed_cat" value="Appropriate" /></label>
             <label><input type="radio" name="deployed_cat" value="Partially appropriate" /></label>
             <label><input type="radio" name="deployed_cat" value="Not appropriate" /></label>
           </div>
           <div class="feedback-row" data-criterion="cat_justification">
-            <div>{% trans "The PQC NIST category recommendation is well justified." %}</div>
+            <div>
+              {% if LANGUAGE_CODE == "ja" %}
+                PQCのNISTカテゴリ推奨は十分に正当化されている。
+              {% else %}
+                {% trans "The PQC NIST category recommendation is well justified." %}
+              {% endif %}
+            </div>
             <label><input type="radio" name="cat_justification" value="Appropriate" /></label>
             <label><input type="radio" name="cat_justification" value="Partially appropriate" /></label>
             <label><input type="radio" name="cat_justification" value="Not appropriate" /></label>
           </div>
           <div class="feedback-row" data-criterion="feasibility">
-            <div>{% trans "The recommendation is feasible under the stated device and communication constraints." %}</div>
+            <div>
+              {% if LANGUAGE_CODE == "ja" %}
+                この推奨は、提示されたデバイス条件および通信制約の下で実現可能である。
+              {% else %}
+                {% trans "The recommendation is feasible under the stated device and communication constraints." %}
+              {% endif %}
+            </div>
             <label><input type="radio" name="feasibility" value="Appropriate" /></label>
             <label><input type="radio" name="feasibility" value="Partially appropriate" /></label>
             <label><input type="radio" name="feasibility" value="Not appropriate" /></label>
           </div>
           <div class="feedback-row" data-criterion="migration_priority">
-            <div>{% trans "The migration priority / migration score is appropriate for this scenario." %}</div>
+            <div>
+              {% if LANGUAGE_CODE == "ja" %}
+                このシナリオに対して、移行優先度 / 移行スコアは適切である。
+              {% else %}
+                {% trans "The migration priority / migration score is appropriate for this scenario." %}
+              {% endif %}
+            </div>
             <label><input type="radio" name="migration_priority" value="Appropriate" /></label>
             <label><input type="radio" name="migration_priority" value="Partially appropriate" /></label>
             <label><input type="radio" name="migration_priority" value="Not appropriate" /></label>
           </div>
           <div class="feedback-row" data-criterion="overall">
-            <div>{% trans "Overall, the framework recommendation is practical and reasonable for deployment." %}</div>
+            <div>
+              {% if LANGUAGE_CODE == "ja" %}
+                全体として、このフレームワークの推奨は実運用において現実的かつ妥当である。
+              {% else %}
+                {% trans "Overall, the framework recommendation is practical and reasonable for deployment." %}
+              {% endif %}
+            </div>
             <label><input type="radio" name="overall" value="Appropriate" /></label>
             <label><input type="radio" name="overall" value="Partially appropriate" /></label>
             <label><input type="radio" name="overall" value="Not appropriate" /></label>
           </div>
         </div>
         <div class="feedback-comments">
-          <label>{% trans "Comments" %}</label>
-          <textarea name="comments" rows="4" placeholder="{% trans 'Add any comments...' %}"></textarea>
+          <label>{% if LANGUAGE_CODE == "ja" %}コメント{% else %}{% trans "Comments" %}{% endif %}</label>
+          <textarea name="comments" rows="4" placeholder="{% if LANGUAGE_CODE == 'ja' %}コメントを入力してください...{% else %}{% trans 'Add any comments...' %}{% endif %}"></textarea>
         </div>
         <div class="modal-actions">
           <button class="btn btn-ghost" type="button" data-expert-close>{% trans "Cancel" %}</button>
-          <button class="btn btn-dark" type="submit">{% trans "Save Feedback" %}</button>
+          <button class="btn btn-dark" type="submit">{% if LANGUAGE_CODE == "ja" %}フィードバックを保存{% else %}{% trans "Save Feedback" %}{% endif %}</button>
         </div>
       </form>
     </div>
   </div>
 
+  <div class="modal" id="weightsModal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card weights-modal-card">
+      <div class="modal-header">
+        <h2>{% if LANGUAGE_CODE == "ja" %}重み設定{% else %}{% trans "Weight Settings" %}{% endif %}</h2>
+        <button class="btn btn-ghost small" type="button" data-weights-close>×</button>
+      </div>
+      <p class="modal-subtitle">
+        {% if LANGUAGE_CODE == "ja" %}
+          現在の式に対して、システムのデフォルト値を使うか、カスタム値を入力してください。
+        {% else %}
+          Choose the system defaults or enter custom values for the existing equations.
+        {% endif %}
+      </p>
+      <form id="weightsForm">
+        <div class="weight-mode">
+          <label class="weight-mode-option">
+            <input type="radio" name="weight_mode" value="default" checked />
+            <span>{% if LANGUAGE_CODE == "ja" %}デフォルト重みを使用{% else %}{% trans "Use default weights" %}{% endif %}</span>
+          </label>
+          <label class="weight-mode-option">
+            <input type="radio" name="weight_mode" value="custom" />
+            <span>{% if LANGUAGE_CODE == "ja" %}重みをカスタマイズ{% else %}{% trans "Customize weights" %}{% endif %}</span>
+          </label>
+        </div>
+        <div class="weights-groups" id="weightsGroups"></div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" type="button" data-weights-reset>{% if LANGUAGE_CODE == "ja" %}デフォルトに戻す{% else %}{% trans "Reset to Defaults" %}{% endif %}</button>
+          <button class="btn btn-ghost" type="button" data-weights-close>{% trans "Cancel" %}</button>
+          <button class="btn btn-dark" type="submit">{% if LANGUAGE_CODE == "ja" %}重みを保存{% else %}{% trans "Save Weights" %}{% endif %}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {{ default_weight_config|json_script:"default-weight-config" }}
+  {{ weight_form_config|json_script:"weight-form-config" }}
+  <script id="company-ui-text" type="application/json">
+    {
+      "customWeightsPending": "{% if LANGUAGE_CODE == 'ja' %}カスタム重みが選択されています。Profile Recommender 実行後に、実際に使用された正規化済み重みが表示されます。{% else %}Custom weights selected. Final normalized weights will appear after Profile Recommender runs.{% endif %}",
+      "customWeightsUsed": "{% if LANGUAGE_CODE == 'ja' %}バックエンドが返したカスタム重みを使用中:{% else %}Using custom weights returned by the backend:{% endif %}",
+      "defaultWeightsUsed": "{% if LANGUAGE_CODE == 'ja' %}デフォルトのシステム重みを使用中です。{% else %}Using default system weights.{% endif %}",
+      "defaultLabel": "{% if LANGUAGE_CODE == 'ja' %}デフォルト:{% else %}Default:{% endif %}",
+      "expertFeedbackSaved": "{% if LANGUAGE_CODE == 'ja' %}専門家フィードバックを保存しました。{% else %}Expert feedback saved.{% endif %}",
+      "deleteRowConfirm": "{% if LANGUAGE_CODE == 'ja' %}この行を削除しますか？{% else %}Delete this row?{% endif %}",
+      "expertFeedbackColumn": "{% if LANGUAGE_CODE == 'ja' %}専門家フィードバック{% else %}Expert Feedback{% endif %}",
+      "expertFeedbackButton": "{% if LANGUAGE_CODE == 'ja' %}フィードバック{% else %}Feedback{% endif %}",
+      "expertFeedbackHint": "{% if LANGUAGE_CODE == 'ja' %}各行のフィードバックボタンをクリックしてフォームを入力してください。{% else %}Click the Feedback button on a row to fill the form.{% endif %}",
+      "submitConfirm": "{% if LANGUAGE_CODE == 'ja' %}このテーブルを送信しますか？管理者が確認できるようになります。{% else %}Submit this table? Admins will be able to review it.{% endif %}",
+      "submittedPrefix": "{% if LANGUAGE_CODE == 'ja' %}送信しました。ID:{% else %}Submitted! ID:{% endif %}",
+      "clearConfirm": "{% if LANGUAGE_CODE == 'ja' %}すべての行と列を消去しますか？この操作は元に戻せません。{% else %}Clear all rows and columns? This cannot be undone.{% endif %}",
+      "sampleConfirm": "{% if LANGUAGE_CODE == 'ja' %}サンプルデータセットを読み込みますか？現在のテーブルは置き換えられます。{% else %}Load sample dataset? This will replace the current table.{% endif %}",
+      "importFailed": "{% if LANGUAGE_CODE == 'ja' %}インポートに失敗しました。{% else %}Import failed.{% endif %}"
+    }
+  </script>
+
   <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
-  <script src="{% static 'js/company-data.js' %}"></script>
+  <script src="{% static 'js/company-data.js' %}?v=20260410-hover-preview-1"></script>
 {% endblock %}

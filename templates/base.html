@@ -1,23 +1,24 @@
 {% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}MIRAI Sheild{% endblock %}</title>
+    <title>{% block title %}未来 Sheild{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=20260410-hover-preview-1" />
     {% block head %}{% endblock %}
   </head>
   <body>
     <header class="site-header">
       <div class="container nav-bar">
-        <div class="brand">{% trans "MIRAI Sheild" %}</div>
+        <div class="brand">未来 Sheild</div>
         <div class="nav-actions">
           <form class="lang-switch" action="{% url 'set_language' %}" method="post">
             {% csrf_token %}
@@ -51,5 +52,17 @@
     <main>
       {% block content %}{% endblock %}
     </main>
+
+    <footer class="site-footer">
+      <div class="container site-footer-inner">
+        <p>
+          {% if LANGUAGE_CODE == "ja" %}
+            すべてのクレジットおよび著作権は IPLAB に帰属します。
+          {% else %}
+            All credits and copyright belong to IPLAB.
+          {% endif %}
+        </p>
+      </div>
+    </footer>
   </body>
 </html>

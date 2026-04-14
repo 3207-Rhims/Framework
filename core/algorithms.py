@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
 import re
-from typing import Dict, List, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, Tuple, TYPE_CHECKING
 
 try:
     import pandas as pd  # type: ignore
@@ -38,6 +39,100 @@ UTILITY_REQUIRED_COLUMNS = [
     "Device",
     "Purdue Layer",
     "Protocols",
+]
+
+DEFAULT_WEIGHT_CONFIG = {
+    "server_utility": {
+        "cpu": 0.7,
+        "bytes": 0.3,
+    },
+    "device_utility": {
+        "cpu": 0.6,
+        "bytes": 0.2,
+        "ram": 0.2,
+    },
+    "migration_risk": {
+        "exposure": 0.45,
+        "impact": 0.35,
+        "lifetime": 0.20,
+    },
+    "migration_feasibility": {
+        "firmware": 0.4,
+        "crypto": 0.4,
+        "vendor": 0.2,
+    },
+    "migration_complexity": {
+        "placement": 0.4,
+        "purdue": 0.3,
+        "device": 0.3,
+    },
+    "migration_score": {
+        "risk": 0.5,
+        "feasibility": 0.3,
+        "complexity": 0.2,
+    },
+}
+
+WEIGHT_FORM_CONFIG = [
+    {
+        "key": "server_utility",
+        "label": "Server Utility Weights",
+        "description": "Used for server or gateway encryption and authentication ranking.",
+        "fields": [
+            {"key": "cpu", "label": "CPU / Latency"},
+            {"key": "bytes", "label": "Bytes"},
+        ],
+    },
+    {
+        "key": "device_utility",
+        "label": "Embedded / Constrained Utility Weights",
+        "description": "Used for embedded, MCU, and constrained-device ranking.",
+        "fields": [
+            {"key": "cpu", "label": "CPU / Cycles"},
+            {"key": "bytes", "label": "Bytes"},
+            {"key": "ram", "label": "RAM"},
+        ],
+    },
+    {
+        "key": "migration_risk",
+        "label": "Migration Risk Weights",
+        "description": "Controls the risk score built from exposure, impact, and lifetime.",
+        "fields": [
+            {"key": "exposure", "label": "Exposure"},
+            {"key": "impact", "label": "Impact"},
+            {"key": "lifetime", "label": "Lifetime"},
+        ],
+    },
+    {
+        "key": "migration_feasibility",
+        "label": "Migration Feasibility Weights",
+        "description": "Controls the feasibility score built from firmware, crypto, and vendor readiness.",
+        "fields": [
+            {"key": "firmware", "label": "Firmware"},
+            {"key": "crypto", "label": "Crypto"},
+            {"key": "vendor", "label": "Vendor"},
+        ],
+    },
+    {
+        "key": "migration_complexity",
+        "label": "Migration Cost Weights",
+        "description": "Controls the complexity score built from placement friction, Purdue layer friction, and device type friction.",
+        "fields": [
+            {"key": "placement", "label": "Placement"},
+            {"key": "purdue", "label": "Purdue"},
+            {"key": "device", "label": "Device"},
+        ],
+    },
+    {
+        "key": "migration_score",
+        "label": "Migration Final Score Weights",
+        "description": "Controls the final migration score mix of risk, feasibility, and complexity.",
+        "fields": [
+            {"key": "risk", "label": "Risk"},
+            {"key": "feasibility", "label": "Feasibility"},
+            {"key": "complexity", "label": "Cost"},
+        ],
+    },
 ]
 
 
@@ -115,6 +210,72 @@ def _normalize_weights(*weights):
     if total == 0:
         return weights
     return tuple(w / total for w in weights)
+
+
+def get_default_weight_config():
+    return deepcopy(DEFAULT_WEIGHT_CONFIG)
+
+
+def get_weight_form_config():
+    config = []
+    defaults = get_default_weight_config()
+    for group in WEIGHT_FORM_CONFIG:
+        config.append(
+            {
+                **group,
+                "defaults": defaults[group["key"]],
+            }
+        )
+    return config
+
+
+def resolve_weight_config(raw_weights: Dict[str, Any] | None = None):
+    defaults = get_default_weight_config()
+    if raw_weights is None:
+        return defaults
+    if not isinstance(raw_weights, dict):
+        raise ValueError("Weights payload must be an object.")
+
+    resolved = {}
+    for group in WEIGHT_FORM_CONFIG:
+        group_key = group["key"]
+        group_defaults = defaults[group_key]
+        provided_group = raw_weights.get(group_key, {})
+        if provided_group in (None, ""):
+            provided_group = {}
+        if not isinstance(provided_group, dict):
+            raise ValueError(f"Weight group '{group_key}' must be an object.")
+
+        values = []
+        field_keys = []
+        for field in group["fields"]:
+            field_key = field["key"]
+            default_value = group_defaults[field_key]
+            raw_value = provided_group.get(field_key)
+
+            if raw_value in (None, ""):
+                value = default_value
+            else:
+                try:
+                    value = float(raw_value)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError(f"Weight '{group_key}.{field_key}' must be numeric.") from exc
+                if value < 0:
+                    raise ValueError(f"Weight '{group_key}.{field_key}' cannot be negative.")
+
+            values.append(value)
+            field_keys.append(field_key)
+
+        if sum(values) == 0:
+            resolved[group_key] = dict(group_defaults)
+            continue
+
+        normalized = _normalize_weights(*values)
+        resolved[group_key] = {
+            key: value for key, value in zip(field_keys, normalized)
+        }
+
+    return resolved
 
 
 def compute_possible_deployed_cat(df):
@@ -421,9 +582,10 @@ def _rank_mcu_sig(mcu_map, cycles_ref, bytes_ref, ram_ref, mult=1, w_cpu=0.6, w_
     return out
 
 
-def compute_utility_scores(df):
+def compute_utility_scores(df, weight_config=None):
     _require_pandas()
     _require_numpy()
+    weights = resolve_weight_config(weight_config)
     mapping = _require_columns(df, UTILITY_REQUIRED_COLUMNS)
     cat_col = mapping["Possible Deployed CAT"]
     has_enc = df[mapping["Has_Enc"]].astype(str)
@@ -473,6 +635,13 @@ def compute_utility_scores(df):
     mcu_maps = _build_mcu_maps(mcu_kem, cats=(1, 3, 5))
     server_sig_maps = _build_server_sig_maps(cpu_sig, cats=(1, 3, 5))
     mcu_sig_maps = _build_mcu_sig_maps(mcu_sig, cats=(1, 3, 5))
+
+    server_utility_weights = weights["server_utility"]
+    device_utility_weights = weights["device_utility"]
+    migration_risk_weights = weights["migration_risk"]
+    migration_feasibility_weights = weights["migration_feasibility"]
+    migration_complexity_weights = weights["migration_complexity"]
+    migration_score_weights = weights["migration_score"]
 
     df = df.copy()
     df["Enc_Ranking_By_Utility"] = ""
@@ -527,13 +696,17 @@ def compute_utility_scores(df):
                     cycles_ref,
                     bytes_ref_cons,
                     default_ram_ref,
-                    w_cpu=0.6,
-                    w_bytes=0.2,
-                    w_ram=0.2,
+                    w_cpu=device_utility_weights["cpu"],
+                    w_bytes=device_utility_weights["bytes"],
+                    w_ram=device_utility_weights["ram"],
                 )
             elif mask_device.loc[idx]:
                 enc_ranked = _rank_server(
-                    server_maps[cat_val], time_ref_us, bytes_ref_server, w_cpu=0.7, w_bytes=0.3
+                    server_maps[cat_val],
+                    time_ref_us,
+                    bytes_ref_server,
+                    w_cpu=server_utility_weights["cpu"],
+                    w_bytes=server_utility_weights["bytes"],
                 )
             else:
                 enc_ranked = _rank_mcu(
@@ -541,9 +714,9 @@ def compute_utility_scores(df):
                     cycles_ref,
                     bytes_ref_emb,
                     default_ram_ref,
-                    w_cpu=0.6,
-                    w_bytes=0.2,
-                    w_ram=0.2,
+                    w_cpu=device_utility_weights["cpu"],
+                    w_bytes=device_utility_weights["bytes"],
+                    w_ram=device_utility_weights["ram"],
                 )
 
             if enc_ranked:
@@ -564,9 +737,9 @@ def compute_utility_scores(df):
                 bytes_ref_cons,
                 default_ram_ref,
                 mult=mult,
-                w_cpu=0.6,
-                w_bytes=0.2,
-                w_ram=0.2,
+                w_cpu=device_utility_weights["cpu"],
+                w_bytes=device_utility_weights["bytes"],
+                w_ram=device_utility_weights["ram"],
             )
         elif mask_device.loc[idx]:
             auth_ranked = _rank_server_sig(
@@ -574,8 +747,8 @@ def compute_utility_scores(df):
                 time_ref_us,
                 bytes_ref_server,
                 mult=mult,
-                w_cpu=0.7,
-                w_bytes=0.3,
+                w_cpu=server_utility_weights["cpu"],
+                w_bytes=server_utility_weights["bytes"],
             )
         else:
             auth_ranked = _rank_mcu_sig(
@@ -584,9 +757,9 @@ def compute_utility_scores(df):
                 bytes_ref_emb,
                 default_ram_ref,
                 mult=mult,
-                w_cpu=0.6,
-                w_bytes=0.2,
-                w_ram=0.2,
+                w_cpu=device_utility_weights["cpu"],
+                w_bytes=device_utility_weights["bytes"],
+                w_ram=device_utility_weights["ram"],
             )
 
         if auth_ranked:
@@ -791,9 +964,24 @@ def compute_utility_scores(df):
     include_pii = False
     if include_pii and col_pii:
         P = df[col_pii].apply(lambda x: 1.0 if as_text(x).lower() in {"y", "yes", "true", "1"} else 0.0)
-        R = (0.45 * E + 0.35 * I + 0.20 * L + 0.10 * P) / 1.10
+        total = (
+            migration_risk_weights["exposure"]
+            + migration_risk_weights["impact"]
+            + migration_risk_weights["lifetime"]
+            + 0.10
+        )
+        R = (
+            migration_risk_weights["exposure"] * E
+            + migration_risk_weights["impact"] * I
+            + migration_risk_weights["lifetime"] * L
+            + 0.10 * P
+        ) / total
     else:
-        R = 0.45 * E + 0.35 * I + 0.20 * L
+        R = (
+            migration_risk_weights["exposure"] * E
+            + migration_risk_weights["impact"] * I
+            + migration_risk_weights["lifetime"] * L
+        )
 
     FW = df[col_fw].apply(yn_maybe) if col_fw else pd.Series(0.5, index=df.index)
     CM = df[col_cm].apply(yn_maybe) if col_cm else pd.Series(0.5, index=df.index)
@@ -809,14 +997,26 @@ def compute_utility_scores(df):
         return 0.5
 
     V = df[col_vendor].apply(vendor_score) if col_vendor else pd.Series(0.5, index=df.index)
-    F = 0.4 * FW + 0.4 * CM + 0.2 * V
+    F = (
+        migration_feasibility_weights["firmware"] * FW
+        + migration_feasibility_weights["crypto"] * CM
+        + migration_feasibility_weights["vendor"] * V
+    )
 
     S = df[col_place].apply(placement_friction) if col_place else pd.Series(0.6, index=df.index)
     Pu = df[col_purdue].apply(purdue_friction) if col_purdue else pd.Series(0.7, index=df.index)
     D = df[col_devtype].apply(device_friction) if col_devtype else pd.Series(0.7, index=df.index)
-    C = 0.4 * S + 0.3 * Pu + 0.3 * D
+    C = (
+        migration_complexity_weights["placement"] * S
+        + migration_complexity_weights["purdue"] * Pu
+        + migration_complexity_weights["device"] * D
+    )
 
-    score = 0.5 * R + 0.3 * F - 0.2 * C
+    score = (
+        migration_score_weights["risk"] * R
+        + migration_score_weights["feasibility"] * F
+        - migration_score_weights["complexity"] * C
+    )
     level = np.select([score >= 0.5, score >= 0.3], ["High", "Medium"], default="Low")
     df["Migration_Priority"] = [
         f"{s:.3f} ({lvl})" if pd.notna(s) else np.nan for s, lvl in zip(score, level)

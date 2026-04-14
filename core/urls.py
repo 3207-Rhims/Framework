@@ -9,6 +9,13 @@ urlpatterns = [
     path("login/", auth_views.LoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("companies/", views.company_select, name="company-select"),
+    path("manual/<str:language>/", views.user_manual, name="user-manual"),
+    path(
+        "framework-explanations/<str:language>/",
+        views.full_framework_explanations,
+        name="full-framework-explanations",
+    ),
+    path("workflow-image/<str:image_type>/", views.workflow_image, name="workflow-image"),
     path("company/<slug:company_type>/", views.company_data, name="company-data"),
     path("api/company/<slug:company_type>/columns/", views.company_columns, name="company-columns"),
     path("api/company/<slug:company_type>/rows/", views.company_rows, name="company-rows"),

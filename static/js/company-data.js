@@ -1,4 +1,5 @@
 const tableEl = document.getElementById("companyTable");
+
 if (tableEl) {
   const columnsUrl = tableEl.dataset.columnsUrl;
   const rowsUrl = tableEl.dataset.rowsUrl;
@@ -6,11 +7,20 @@ if (tableEl) {
   const profileUrl = tableEl.dataset.profileUrl;
   const importUrl = tableEl.dataset.importUrl;
   const clearUrl = tableEl.dataset.clearUrl;
-  const utilityUrl = tableEl.dataset.utilityUrl;
   const sampleUrl = tableEl.dataset.sampleUrl;
   const expertUrlTemplate = tableEl.dataset.expertUrl;
   const submitUrl = tableEl.dataset.submitUrl;
   const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+  const defaultWeightConfig = JSON.parse(
+    document.getElementById("default-weight-config").textContent
+  );
+  const weightFormConfig = JSON.parse(
+    document.getElementById("weight-form-config").textContent
+  );
+  const uiText = JSON.parse(document.getElementById("company-ui-text").textContent);
+
+  const cloneValue = (value) => JSON.parse(JSON.stringify(value));
 
   const fetchJson = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -29,8 +39,36 @@ if (tableEl) {
     return data;
   };
 
-  const modal = document.getElementById("expertModal");
-  const modalRowLabel = document.getElementById("expertRowLabel");
+  const formatWeight = (value) => {
+    const rounded = Number(value).toFixed(4);
+    return rounded.replace(/0+$/, "").replace(/\.$/, "");
+  };
+
+  const buildWeightSummary = (mode, weights, isPending = false) => {
+    if (isPending && mode === "custom") {
+      return uiText.customWeightsPending;
+    }
+
+    const title =
+      mode === "custom"
+        ? uiText.customWeightsUsed
+        : uiText.defaultWeightsUsed;
+
+    const parts = weightFormConfig.map((group) => {
+      const values = group.fields
+        .map((field) => {
+          const value = weights[group.key]?.[field.key];
+          return `${field.label}=${formatWeight(value)}`;
+        })
+        .join(", ");
+      return `${group.label}: ${values}`;
+    });
+
+    return [title, ...parts].join("<br>");
+  };
+
+  const expertModal = document.getElementById("expertModal");
+  const expertRowLabel = document.getElementById("expertRowLabel");
   const expertForm = document.getElementById("expertForm");
   let activeRowId = null;
   let activeRowLabel = "";
@@ -38,7 +76,7 @@ if (tableEl) {
   const openExpertModal = async (rowData) => {
     activeRowId = rowData.row_id;
     activeRowLabel = rowData.ID || rowData.id || rowData.row_index || activeRowId;
-    modalRowLabel.textContent = activeRowLabel;
+    expertRowLabel.textContent = activeRowLabel;
     expertForm.reset();
 
     try {
@@ -61,15 +99,15 @@ if (tableEl) {
       alert(error.message);
     }
 
-    modal.classList.add("show");
+    expertModal.classList.add("show");
   };
 
   const closeExpertModal = () => {
-    modal.classList.remove("show");
+    expertModal.classList.remove("show");
     activeRowId = null;
   };
 
-  modal.addEventListener("click", (event) => {
+  expertModal.addEventListener("click", (event) => {
     if (event.target.classList.contains("modal-backdrop")) {
       closeExpertModal();
     }
@@ -91,12 +129,178 @@ if (tableEl) {
           body: JSON.stringify(data),
         });
         closeExpertModal();
-        alert("Expert feedback saved.");
+        alert(uiText.expertFeedbackSaved);
       } catch (error) {
         alert(error.message);
       }
     });
   }
+
+  const weightsModal = document.getElementById("weightsModal");
+  const weightsForm = document.getElementById("weightsForm");
+  const weightsGroups = document.getElementById("weightsGroups");
+  const weightsStatus = document.getElementById("weightsStatus");
+  const weightsButton = document.querySelector('[data-action="weights"]');
+  const weightsResetButton = document.querySelector("[data-weights-reset]");
+  let activeWeightMode = "default";
+  let customWeightInputs = cloneValue(defaultWeightConfig);
+  let lastUsedWeights = cloneValue(defaultWeightConfig);
+  let modalWeightMode = activeWeightMode;
+
+  document.querySelectorAll(".workflow-preview").forEach((preview) => {
+    const card = preview.querySelector(".workflow-preview-card");
+    if (!card) return;
+
+    const showCard = () => {
+      card.hidden = false;
+      card.classList.add("is-visible");
+      card.setAttribute("aria-hidden", "false");
+    };
+
+    const hideCard = () => {
+      card.hidden = true;
+      card.classList.remove("is-visible");
+      card.setAttribute("aria-hidden", "true");
+    };
+
+    preview.addEventListener("mouseenter", showCard);
+    preview.addEventListener("mouseleave", hideCard);
+    preview.addEventListener("focusin", showCard);
+    preview.addEventListener("focusout", hideCard);
+  });
+
+  const renderWeightGroups = () => {
+    weightsGroups.innerHTML = weightFormConfig
+      .map((group) => {
+        const fields = group.fields
+          .map((field) => {
+            const value = customWeightInputs[group.key]?.[field.key];
+            const defaultValue = group.defaults[field.key];
+            return `
+              <div class="weight-field">
+                <label for="weight-${group.key}-${field.key}">${field.label}</label>
+                <input
+                  id="weight-${group.key}-${field.key}"
+                  name="${group.key}.${field.key}"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="${value ?? defaultValue}"
+                />
+                <span>${uiText.defaultLabel} ${formatWeight(defaultValue)}</span>
+              </div>
+            `;
+          })
+          .join("");
+
+        return `
+          <section class="weight-group" data-group="${group.key}">
+            <h3>${group.label}</h3>
+            <p>${group.description}</p>
+            <div class="weight-grid">${fields}</div>
+          </section>
+        `;
+      })
+      .join("");
+  };
+
+  const syncWeightModeUi = (mode = modalWeightMode) => {
+    const isCustom = mode === "custom";
+    weightsGroups
+      .querySelectorAll("input[type='number']")
+      .forEach((input) => {
+        input.disabled = !isCustom;
+      });
+    weightsGroups.querySelectorAll(".weight-group").forEach((group) => {
+      group.classList.toggle("is-disabled", !isCustom);
+    });
+  };
+
+  const collectCustomWeights = () => {
+    const payload = {};
+    weightFormConfig.forEach((group) => {
+      payload[group.key] = {};
+      group.fields.forEach((field) => {
+        const input = weightsForm.querySelector(
+          `[name="${group.key}.${field.key}"]`
+        );
+        payload[group.key][field.key] = input ? input.value.trim() : "";
+      });
+    });
+    return payload;
+  };
+
+  const openWeightsModal = () => {
+    renderWeightGroups();
+    modalWeightMode = activeWeightMode;
+    const radio = weightsForm.querySelector(
+      `input[name="weight_mode"][value="${modalWeightMode}"]`
+    );
+    if (radio) radio.checked = true;
+    syncWeightModeUi();
+    weightsModal.classList.add("show");
+  };
+
+  const closeWeightsModal = () => {
+    weightsModal.classList.remove("show");
+  };
+
+  const updateWeightStatus = (mode, weights, isPending = false) => {
+    weightsStatus.innerHTML = buildWeightSummary(mode, weights, isPending);
+  };
+
+  weightsModal.addEventListener("click", (event) => {
+    if (event.target.classList.contains("modal-backdrop")) {
+      closeWeightsModal();
+    }
+  });
+
+  document.querySelectorAll("[data-weights-close]").forEach((btn) => {
+    btn.addEventListener("click", closeWeightsModal);
+  });
+
+  if (weightsButton) {
+    weightsButton.addEventListener("click", openWeightsModal);
+  }
+
+  if (weightsResetButton) {
+    weightsResetButton.addEventListener("click", () => {
+      modalWeightMode = "default";
+      customWeightInputs = cloneValue(defaultWeightConfig);
+      renderWeightGroups();
+      const radio = weightsForm.querySelector(
+        'input[name="weight_mode"][value="default"]'
+      );
+      if (radio) radio.checked = true;
+      syncWeightModeUi("default");
+    });
+  }
+
+  if (weightsForm) {
+    weightsForm.addEventListener("change", (event) => {
+      if (event.target.name === "weight_mode") {
+        modalWeightMode = event.target.value;
+        syncWeightModeUi(modalWeightMode);
+      }
+    });
+
+    weightsForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      activeWeightMode =
+        weightsForm.querySelector('input[name="weight_mode"]:checked')?.value ||
+        "default";
+      modalWeightMode = activeWeightMode;
+      customWeightInputs = collectCustomWeights();
+      updateWeightStatus(
+        activeWeightMode,
+        activeWeightMode === "custom" ? customWeightInputs : defaultWeightConfig,
+        activeWeightMode === "custom"
+      );
+      closeWeightsModal();
+    });
+  }
+
+  updateWeightStatus("default", defaultWeightConfig);
 
   const initTable = async () => {
     const columnResponse = await fetchJson(columnsUrl);
@@ -157,7 +361,7 @@ if (tableEl) {
       cellClick: async (e, cell) => {
         const row = cell.getRow();
         const data = row.getData();
-        if (!confirm("Delete this row?")) return;
+        if (!confirm(uiText.deleteRowConfirm)) return;
         await fetchJson(`${rowsUrl}${data.row_id}/`, { method: "DELETE" });
         row.delete();
       },
@@ -165,11 +369,11 @@ if (tableEl) {
 
     let feedbackColumnVisible = false;
     const feedbackColumn = {
-      title: "Expert Feedback",
+      title: uiText.expertFeedbackColumn,
       field: "_feedback",
       width: 160,
       hozAlign: "center",
-      formatter: () => "<button class=\"btn btn-ghost small\">Feedback</button>",
+      formatter: () => `<button class="btn btn-ghost small">${uiText.expertFeedbackButton}</button>`,
       cellClick: (e, cell) => {
         const row = cell.getRow().getData();
         openExpertModal(row);
@@ -244,15 +448,23 @@ if (tableEl) {
     });
 
     document.querySelector('[data-action="profile"]').addEventListener("click", async () => {
+      const payload =
+        activeWeightMode === "custom"
+          ? { weight_mode: "custom", weights: customWeightInputs }
+          : { weight_mode: "default" };
+
       try {
-        await fetchJson(profileUrl, { method: "POST" });
+        const result = await fetchJson(profileUrl, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        lastUsedWeights = result.used_weights || cloneValue(defaultWeightConfig);
+        updateWeightStatus(result.weight_mode || activeWeightMode, lastUsedWeights);
         await refreshTable();
       } catch (error) {
         alert(error.message);
       }
     });
-
-    // Utility Score button removed
 
     const expertButton = document.querySelector('[data-action="expert"]');
     if (expertButton) {
@@ -260,7 +472,7 @@ if (tableEl) {
         feedbackColumnVisible = !feedbackColumnVisible;
         await refreshTable();
         if (feedbackColumnVisible) {
-          alert("Click the Feedback button on a row to fill the form.");
+          alert(uiText.expertFeedbackHint);
         }
       });
     }
@@ -268,13 +480,13 @@ if (tableEl) {
     const submitButton = document.querySelector('[data-action="submit"]');
     if (submitButton) {
       submitButton.addEventListener("click", async () => {
-        if (!confirm("Submit this table? Admins will be able to review it.")) return;
+        if (!confirm(uiText.submitConfirm)) return;
         try {
           const result = await fetchJson(submitUrl, {
             method: "POST",
             body: JSON.stringify({}),
           });
-          alert(`Submitted! ID: ${result.submission_id}`);
+          alert(`${uiText.submittedPrefix} ${result.submission_id}`);
         } catch (error) {
           alert(error.message);
         }
@@ -286,7 +498,7 @@ if (tableEl) {
     });
 
     document.querySelector('[data-action="clear"]').addEventListener("click", async () => {
-      if (!confirm("Clear all rows and columns? This cannot be undone.")) return;
+      if (!confirm(uiText.clearConfirm)) return;
       try {
         await fetchJson(clearUrl, { method: "POST" });
         table.setColumns([deleteColumn]);
@@ -297,7 +509,7 @@ if (tableEl) {
     });
 
     document.querySelector('[data-action="sample"]').addEventListener("click", async () => {
-      if (!confirm("Load sample dataset? This will replace the current table.")) return;
+      if (!confirm(uiText.sampleConfirm)) return;
       try {
         await fetchJson(sampleUrl, { method: "POST" });
         await refreshTable();
@@ -305,8 +517,6 @@ if (tableEl) {
         alert(error.message);
       }
     });
-
-    // expert handler attached above
 
     document.querySelector('[data-action="import"]').addEventListener("click", () => {
       const input = document.createElement("input");
@@ -330,7 +540,7 @@ if (tableEl) {
 
         if (!response.ok) {
           const data = await response.json();
-          alert(data.error || "Import failed.");
+          alert(data.error || uiText.importFailed);
           return;
         }
 

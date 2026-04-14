@@ -9,13 +9,19 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.db import models
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.text import slugify
 from django.views.decorators.http import require_http_methods
 
 from .models import Company, CompanyType, ExpertFeedback, Submission, TableColumn, TableRow
-from .algorithms import compute_possible_deployed_cat, compute_utility_scores
+from .algorithms import (
+    compute_possible_deployed_cat,
+    compute_utility_scores,
+    get_default_weight_config,
+    get_weight_form_config,
+    resolve_weight_config,
+)
 
 EXPERT_FEEDBACK_CHOICES = {
     "recommended_pqc": "recommended_pqc",
@@ -46,6 +52,21 @@ DEFAULT_COLUMNS = [
     {"name": "Column G", "key": "col_g"},
     {"name": "Column H", "key": "col_h"},
 ]
+
+USER_MANUAL_FILES = {
+    "en": "User_manual_en.pdf",
+    "jp": "User_manual_jp.pdf",
+}
+
+FULL_FRAMEWORK_EXPLANATION_FILES = {
+    "en": "Full_Framework_Explanations_en.pdf",
+    "jp": "Full_Framework_Explanations_jp.pdf",
+}
+
+WORKFLOW_IMAGE_FILES = {
+    "policy": "policy_engine.png",
+    "profile": "profile recommender.png",
+}
 
 
 def seed_company_types():
@@ -193,6 +214,93 @@ def _clean_json_value(value):
     return value
 
 
+def _parse_json_body(request):
+    try:
+        return json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return {}
+
+
+def _resolve_request_weights(payload):
+    mode = "custom" if payload.get("weight_mode") == "custom" else "default"
+    raw_weights = payload.get("weights") if mode == "custom" else None
+    weights = resolve_weight_config(raw_weights)
+    return mode, weights
+
+
+def _localized_weight_form_config(language_code):
+    config = get_weight_form_config()
+    if not str(language_code).startswith("ja"):
+        return config
+
+    translations = {
+        "server_utility": {
+            "label": "サーバー向けユーティリティ重み",
+            "description": "サーバーまたはゲートウェイの暗号化・認証ランキングに使われます。",
+            "fields": {
+                "cpu": "CPU / レイテンシ",
+                "bytes": "バイト数",
+            },
+        },
+        "device_utility": {
+            "label": "組み込み / 制約端末ユーティリティ重み",
+            "description": "組み込み、MCU、制約デバイスのランキングに使われます。",
+            "fields": {
+                "cpu": "CPU / サイクル",
+                "bytes": "バイト数",
+                "ram": "RAM",
+            },
+        },
+        "migration_risk": {
+            "label": "移行リスク重み",
+            "description": "Exposure、Impact、Lifetime から作るリスクスコアに使われます。",
+            "fields": {
+                "exposure": "Exposure",
+                "impact": "Impact",
+                "lifetime": "Lifetime",
+            },
+        },
+        "migration_feasibility": {
+            "label": "移行実現性重み",
+            "description": "Firmware、Crypto、Vendor readiness から作る実現性スコアに使われます。",
+            "fields": {
+                "firmware": "Firmware",
+                "crypto": "Crypto",
+                "vendor": "Vendor",
+            },
+        },
+        "migration_complexity": {
+            "label": "移行複雑性重み",
+            "description": "Placement、Purdue layer、Device type から作る複雑性スコアに使われます。",
+            "fields": {
+                "placement": "Placement",
+                "purdue": "Purdue",
+                "device": "Device",
+            },
+        },
+        "migration_score": {
+            "label": "移行最終スコア重み",
+            "description": "Risk、Feasibility、Complexity を混ぜる最終スコアに使われます。",
+            "fields": {
+                "risk": "Risk",
+                "feasibility": "Feasibility",
+                "complexity": "Complexity",
+            },
+        },
+    }
+
+    for group in config:
+        translated = translations.get(group["key"])
+        if not translated:
+            continue
+        group["label"] = translated["label"]
+        group["description"] = translated["description"]
+        for field in group["fields"]:
+            field["label"] = translated["fields"].get(field["key"], field["label"])
+
+    return config
+
+
 def home(request):
     return render(request, "home.html")
 
@@ -224,8 +332,52 @@ def company_data(request, company_type):
     return render(
         request,
         "company_data.html",
-        {"company_type": company_type_obj, "company": company},
+        {
+            "company_type": company_type_obj,
+            "company": company,
+            "default_weight_config": get_default_weight_config(),
+            "weight_form_config": _localized_weight_form_config(getattr(request, "LANGUAGE_CODE", "")),
+        },
     )
+
+
+@login_required
+def user_manual(request, language):
+    filename = USER_MANUAL_FILES.get(language)
+    if not filename:
+        raise Http404("Manual not found.")
+
+    manual_path = Path(__file__).resolve().parents[1] / "Algoritthm implementation" / "data" / filename
+    if not manual_path.exists():
+        raise Http404("Manual file is missing.")
+
+    return FileResponse(manual_path.open("rb"), content_type="application/pdf")
+
+
+@login_required
+def full_framework_explanations(request, language):
+    filename = FULL_FRAMEWORK_EXPLANATION_FILES.get(language)
+    if not filename:
+        raise Http404("Explanation file not found.")
+
+    file_path = Path(__file__).resolve().parents[1] / "Algoritthm implementation" / "data" / filename
+    if not file_path.exists():
+        raise Http404("Explanation PDF is missing.")
+
+    return FileResponse(file_path.open("rb"), content_type="application/pdf")
+
+
+@login_required
+def workflow_image(request, image_type):
+    filename = WORKFLOW_IMAGE_FILES.get(image_type)
+    if not filename:
+        raise Http404("Workflow image not found.")
+
+    image_path = Path(__file__).resolve().parents[1] / "Algoritthm implementation" / "data" / filename
+    if not image_path.exists():
+        raise Http404("Workflow image is missing.")
+
+    return FileResponse(image_path.open("rb"), content_type="image/png")
 
 
 @login_required
@@ -317,9 +469,11 @@ def profile_recommender(request, company_type):
     company = ensure_company(request.user, company_type_obj)
     ensure_default_columns(company)
     ensure_default_rows(company)
+    payload = _parse_json_body(request)
     try:
+        weight_mode, weights = _resolve_request_weights(payload)
         df = company_to_dataframe(company)
-        df = compute_utility_scores(df)
+        df = compute_utility_scores(df, weights)
     except (ValueError, ImportError) as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
@@ -336,7 +490,7 @@ def profile_recommender(request, company_type):
     ]
     ensure_columns(company, new_cols)
     update_rows_from_dataframe(company, df, new_cols)
-    return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "ok", "used_weights": weights, "weight_mode": weight_mode})
 
 
 @login_required
@@ -346,9 +500,11 @@ def utility_score(request, company_type):
     company = ensure_company(request.user, company_type_obj)
     ensure_default_columns(company)
     ensure_default_rows(company)
+    payload = _parse_json_body(request)
     try:
+        weight_mode, weights = _resolve_request_weights(payload)
         df = company_to_dataframe(company)
-        df = compute_utility_scores(df)
+        df = compute_utility_scores(df, weights)
     except (ValueError, ImportError) as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
@@ -365,7 +521,7 @@ def utility_score(request, company_type):
     ]
     ensure_columns(company, new_cols)
     update_rows_from_dataframe(company, df, new_cols)
-    return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "ok", "used_weights": weights, "weight_mode": weight_mode})
 
 
 @login_required
