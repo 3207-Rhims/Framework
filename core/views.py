@@ -5,7 +5,7 @@ import math
 from pathlib import Path
 from typing import List
 
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.db import models
@@ -303,6 +303,11 @@ def _localized_weight_form_config(language_code):
 
 def home(request):
     return render(request, "home.html")
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("home")
 
 
 def signup(request):
