@@ -537,6 +537,24 @@ main {
   overflow-x: auto;
 }
 
+.table-action-message {
+  margin: 0 20px 16px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #ecfdf5;
+  border: 1px solid #86efac;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: var(--soft-shadow);
+}
+
+.table-action-message.is-error {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
 .weights-status {
   margin: 16px 20px 20px;
   padding: 12px 14px;

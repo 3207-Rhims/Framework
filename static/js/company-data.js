@@ -70,8 +70,22 @@ if (tableEl) {
   const expertModal = document.getElementById("expertModal");
   const expertRowLabel = document.getElementById("expertRowLabel");
   const expertForm = document.getElementById("expertForm");
+  const tableActionMessage = document.getElementById("tableActionMessage");
   let activeRowId = null;
   let activeRowLabel = "";
+  let tableMessageTimer = null;
+
+  const showTableMessage = (message, isError = false) => {
+    if (!tableActionMessage) return;
+    window.clearTimeout(tableMessageTimer);
+    tableActionMessage.textContent = message;
+    tableActionMessage.hidden = false;
+    tableActionMessage.classList.toggle("is-error", isError);
+    tableMessageTimer = window.setTimeout(() => {
+      tableActionMessage.hidden = true;
+      tableActionMessage.classList.remove("is-error");
+    }, 4500);
+  };
 
   const openExpertModal = async (rowData) => {
     activeRowId = rowData.row_id;
@@ -130,8 +144,10 @@ if (tableEl) {
         });
         closeExpertModal();
         alert(uiText.expertFeedbackSaved);
+        showTableMessage(uiText.feedbackSavedStatus);
       } catch (error) {
         alert(error.message);
+        showTableMessage(error.message, true);
       }
     });
   }
@@ -296,6 +312,7 @@ if (tableEl) {
         activeWeightMode === "custom" ? customWeightInputs : defaultWeightConfig,
         activeWeightMode === "custom"
       );
+      showTableMessage(uiText.weightsSaved);
       closeWeightsModal();
     });
   }
@@ -426,6 +443,7 @@ if (tableEl) {
         body: JSON.stringify({}),
       });
       table.addRow(response.row);
+      showTableMessage(uiText.rowAdded);
     });
 
     const refreshTable = async () => {
@@ -442,8 +460,10 @@ if (tableEl) {
       try {
         await fetchJson(policyUrl, { method: "POST" });
         await refreshTable();
+        showTableMessage(uiText.policyDone);
       } catch (error) {
         alert(error.message);
+        showTableMessage(error.message, true);
       }
     });
 
@@ -461,8 +481,10 @@ if (tableEl) {
         lastUsedWeights = result.used_weights || cloneValue(defaultWeightConfig);
         updateWeightStatus(result.weight_mode || activeWeightMode, lastUsedWeights);
         await refreshTable();
+        showTableMessage(uiText.profileDone);
       } catch (error) {
         alert(error.message);
+        showTableMessage(error.message, true);
       }
     });
 
@@ -473,6 +495,9 @@ if (tableEl) {
         await refreshTable();
         if (feedbackColumnVisible) {
           alert(uiText.expertFeedbackHint);
+          showTableMessage(uiText.expertShown);
+        } else {
+          showTableMessage(uiText.expertHidden);
         }
       });
     }
@@ -486,15 +511,17 @@ if (tableEl) {
             method: "POST",
             body: JSON.stringify({}),
           });
-          alert(`${uiText.submittedPrefix} ${result.submission_id}`);
+          showTableMessage(`${uiText.submitDone} ${uiText.submittedPrefix} ${result.submission_id}`);
         } catch (error) {
           alert(error.message);
+          showTableMessage(error.message, true);
         }
       });
     }
 
     document.querySelector('[data-action="export"]').addEventListener("click", () => {
       table.download("csv", "company-data.csv");
+      showTableMessage(uiText.exportDone);
     });
 
     document.querySelector('[data-action="clear"]').addEventListener("click", async () => {
@@ -503,8 +530,10 @@ if (tableEl) {
         await fetchJson(clearUrl, { method: "POST" });
         table.setColumns([deleteColumn]);
         table.setData([]);
+        showTableMessage(uiText.clearDone);
       } catch (error) {
         alert(error.message);
+        showTableMessage(error.message, true);
       }
     });
 
@@ -513,8 +542,10 @@ if (tableEl) {
       try {
         await fetchJson(sampleUrl, { method: "POST" });
         await refreshTable();
+        showTableMessage(uiText.sampleDone);
       } catch (error) {
         alert(error.message);
+        showTableMessage(error.message, true);
       }
     });
 
@@ -541,11 +572,13 @@ if (tableEl) {
         if (!response.ok) {
           const data = await response.json();
           alert(data.error || uiText.importFailed);
+          showTableMessage(data.error || uiText.importFailed, true);
           return;
         }
 
         await response.json();
         await refreshTable();
+        showTableMessage(uiText.importDone);
       });
       input.click();
     });

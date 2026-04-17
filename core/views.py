@@ -53,6 +53,49 @@ DEFAULT_COLUMNS = [
     {"name": "Column H", "key": "col_h"},
 ]
 
+FEEDBACK_EXPORT_LABELS = [
+    ("recommended_pqc", "Expert Feedback: Recommended PQC"),
+    ("deployed_cat", "Expert Feedback: Deployed CAT"),
+    ("cat_justification", "Expert Feedback: CAT Justification"),
+    ("feasibility", "Expert Feedback: Feasibility"),
+    ("migration_priority", "Expert Feedback: Migration Priority"),
+    ("overall", "Expert Feedback: Overall"),
+    ("comments", "Expert Feedback: Comments"),
+]
+
+FEEDBACK_COLUMN_ALIASES = {
+    "recommended_pqc": [
+        "Expert Feedback: Recommended PQC",
+        "Expert Feedback (Recommended PQC)",
+        "Expert Feedback (Algorithm Selection)",
+    ],
+    "deployed_cat": [
+        "Expert Feedback: Deployed CAT",
+        "Expert Feedback (Deployed CAT)",
+    ],
+    "cat_justification": [
+        "Expert Feedback: CAT Justification",
+        "Expert Feedback (CAT Justification)",
+    ],
+    "feasibility": [
+        "Expert Feedback: Feasibility",
+        "Expert Feedback (Feasibility)",
+    ],
+    "migration_priority": [
+        "Expert Feedback: Migration Priority",
+        "Expert Feedback (Migration Priority)",
+    ],
+    "overall": [
+        "Expert Feedback: Overall",
+        "Expert Feedback (Overall)",
+    ],
+    "comments": [
+        "Expert Feedback: Comments",
+        "Expert Feedback (Comments)",
+        "Expert Comments",
+    ],
+}
+
 USER_MANUAL_FILES = {
     "en": "User_manual_en.pdf",
     "jp": "User_manual_jp.pdf",
@@ -186,6 +229,44 @@ def update_rows_from_dataframe(company, df, column_names: List[str]):
                 continue
             row_obj.data[column.key] = _clean_json_value(record.get(name, ""))
         row_obj.save(update_fields=["data"])
+
+
+def _value_from_row_aliases(row, columns_by_name, aliases):
+    for alias in aliases:
+        column = columns_by_name.get(alias)
+        if not column:
+            continue
+        value = _clean_json_value(row.data.get(column.key, ""))
+        if value not in ("", None):
+            return str(value)
+    return ""
+
+
+def sync_expert_feedback_from_table(company, rows=None, columns=None):
+    rows = list(rows if rows is not None else company.rows.all())
+    columns = list(columns if columns is not None else company.columns.all())
+    columns_by_name = {column.name: column for column in columns}
+
+    synced_count = 0
+    for row in rows:
+        feedback_values = {
+            field: _value_from_row_aliases(row, columns_by_name, aliases)
+            for field, aliases in FEEDBACK_COLUMN_ALIASES.items()
+        }
+        if not any(feedback_values.values()):
+            continue
+
+        feedback, _ = ExpertFeedback.objects.get_or_create(table_row=row)
+        changed = False
+        for field, value in feedback_values.items():
+            if value and getattr(feedback, field) != value:
+                setattr(feedback, field, value)
+                changed = True
+        if changed:
+            feedback.save()
+        synced_count += 1
+
+    return synced_count
 
 
 
@@ -672,16 +753,7 @@ def submit_table(request, company_type):
 
     columns = list(company.columns.all())
     rows = list(company.rows.all())
-
-    feedback_labels = [
-        ("recommended_pqc", "Expert Feedback: Recommended PQC"),
-        ("deployed_cat", "Expert Feedback: Deployed CAT"),
-        ("cat_justification", "Expert Feedback: CAT Justification"),
-        ("feasibility", "Expert Feedback: Feasibility"),
-        ("migration_priority", "Expert Feedback: Migration Priority"),
-        ("overall", "Expert Feedback: Overall"),
-        ("comments", "Expert Feedback: Comments"),
-    ]
+    sync_expert_feedback_from_table(company, rows=rows, columns=columns)
 
     feedback_map = {
         fb.table_row_id: fb
@@ -694,7 +766,7 @@ def submit_table(request, company_type):
         for column in columns:
             record[column.name] = _clean_json_value(row.data.get(column.key, ""))
         feedback = feedback_map.get(row.id)
-        for key, label in feedback_labels:
+        for key, label in FEEDBACK_EXPORT_LABELS:
             value = getattr(feedback, key, "") if feedback else ""
             record[label] = _clean_json_value(value)
         payload_rows.append(record)
@@ -704,7 +776,7 @@ def submit_table(request, company_type):
         user=request.user,
         data={
             "columns": [column.name for column in columns]
-            + [label for _, label in feedback_labels],
+            + [label for _, label in FEEDBACK_EXPORT_LABELS],
             "rows": payload_rows,
         },
     )

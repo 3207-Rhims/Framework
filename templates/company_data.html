@@ -94,6 +94,8 @@
         </div>
       </div>
 
+      <div class="table-action-message" id="tableActionMessage" role="status" aria-live="polite" hidden></div>
+
       <div class="table-wrap">
         <div
           id="companyTable"
@@ -269,10 +271,22 @@
       "submittedPrefix": "{% if LANGUAGE_CODE == 'ja' %}送信しました。ID:{% else %}Submitted! ID:{% endif %}",
       "clearConfirm": "{% if LANGUAGE_CODE == 'ja' %}すべての行と列を消去しますか？この操作は元に戻せません。{% else %}Clear all rows and columns? This cannot be undone.{% endif %}",
       "sampleConfirm": "{% if LANGUAGE_CODE == 'ja' %}サンプルデータセットを読み込みますか？現在のテーブルは置き換えられます。{% else %}Load sample dataset? This will replace the current table.{% endif %}",
-      "importFailed": "{% if LANGUAGE_CODE == 'ja' %}インポートに失敗しました。{% else %}Import failed.{% endif %}"
+      "importFailed": "{% if LANGUAGE_CODE == 'ja' %}インポートに失敗しました。{% else %}Import failed.{% endif %}",
+      "policyDone": "{% if LANGUAGE_CODE == 'ja' %}ポリシーエンジンの計算が完了しました。{% else %}Policy Engine completed.{% endif %}",
+      "profileDone": "{% if LANGUAGE_CODE == 'ja' %}プロファイル推奨の計算が完了しました。{% else %}Profile Recommender completed.{% endif %}",
+      "rowAdded": "{% if LANGUAGE_CODE == 'ja' %}新しい行を追加しました。{% else %}New row added.{% endif %}",
+      "expertShown": "{% if LANGUAGE_CODE == 'ja' %}専門家フィードバック列を表示しました。{% else %}Expert feedback column is now visible.{% endif %}",
+      "expertHidden": "{% if LANGUAGE_CODE == 'ja' %}専門家フィードバック列を非表示にしました。{% else %}Expert feedback column is now hidden.{% endif %}",
+      "submitDone": "{% if LANGUAGE_CODE == 'ja' %}テーブルを送信しました。{% else %}Table submitted successfully.{% endif %}",
+      "exportDone": "{% if LANGUAGE_CODE == 'ja' %}CSVエクスポートを開始しました。{% else %}CSV export started.{% endif %}",
+      "clearDone": "{% if LANGUAGE_CODE == 'ja' %}テーブルをクリアしました。{% else %}Table cleared.{% endif %}",
+      "sampleDone": "{% if LANGUAGE_CODE == 'ja' %}サンプルデータを読み込みました。{% else %}Sample dataset loaded.{% endif %}",
+      "importDone": "{% if LANGUAGE_CODE == 'ja' %}ファイルをインポートしました。{% else %}File imported successfully.{% endif %}",
+      "weightsSaved": "{% if LANGUAGE_CODE == 'ja' %}重み設定を保存しました。{% else %}Weight settings saved.{% endif %}",
+      "feedbackSavedStatus": "{% if LANGUAGE_CODE == 'ja' %}専門家フィードバックを保存しました。{% else %}Expert feedback saved.{% endif %}"
     }
   </script>
 
   <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
-  <script src="{% static 'js/company-data.js' %}?v=20260410-hover-preview-1"></script>
+  <script src="{% static 'js/company-data.js' %}?v=20260417-action-messages-1"></script>
 {% endblock %}
