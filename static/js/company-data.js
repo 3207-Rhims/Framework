@@ -74,6 +74,8 @@ if (tableEl) {
   let activeRowId = null;
   let activeRowLabel = "";
   let tableMessageTimer = null;
+  let updateWhyVisibility = () => {};
+  let updateWhyWordCounts = () => {};
 
   const showTableMessage = (message, isError = false) => {
     if (!tableActionMessage) return;
@@ -92,6 +94,13 @@ if (tableEl) {
     activeRowLabel = rowData.ID || rowData.id || rowData.row_index || activeRowId;
     expertRowLabel.textContent = activeRowLabel;
     expertForm.reset();
+    expertForm.querySelectorAll("[data-word-count-for]").forEach((counter) => {
+      counter.textContent = `0 / 200 words`;
+      counter.classList.remove("is-limit");
+    });
+    expertForm.querySelectorAll("[data-why-for]").forEach((row) => {
+      row.hidden = true;
+    });
 
     try {
       const url = expertUrlTemplate.replace("/0/", `/${activeRowId}/`);
@@ -109,6 +118,8 @@ if (tableEl) {
           field.value = value || "";
         }
       });
+      updateWhyVisibility();
+      updateWhyWordCounts();
     } catch (error) {
       alert(error.message);
     }
@@ -132,6 +143,57 @@ if (tableEl) {
   });
 
   if (expertForm) {
+    const needsWhy = (value) =>
+      value === "Partially appropriate" || value === "Not appropriate";
+
+    updateWhyVisibility = () => {
+      expertForm.querySelectorAll("[data-why-for]").forEach((whyRow) => {
+        const criterion = whyRow.dataset.whyFor;
+        const checked = expertForm.querySelector(`input[name="${criterion}"]:checked`);
+        whyRow.hidden = !needsWhy(checked?.value || "");
+      });
+    };
+
+    const countWords = (value) => {
+      const trimmed = String(value || "").trim();
+      return trimmed ? trimmed.split(/\s+/).length : 0;
+    };
+
+    const trimToWordLimit = (value, limit) => {
+      const words = String(value || "").trim().split(/\s+/).filter(Boolean);
+      if (words.length <= limit) return String(value || "");
+      return words.slice(0, limit).join(" ");
+    };
+
+    updateWhyWordCounts = () => {
+      expertForm.querySelectorAll("textarea[data-word-limit]").forEach((textarea) => {
+        const limit = Number(textarea.dataset.wordLimit || 200);
+        const count = countWords(textarea.value);
+        const counter = expertForm.querySelector(
+          `[data-word-count-for="${textarea.name}"]`
+        );
+        if (!counter) return;
+        counter.textContent = `${count} / ${limit} words`;
+        counter.classList.toggle("is-limit", count >= limit);
+      });
+    };
+
+    expertForm.querySelectorAll("textarea[data-word-limit]").forEach((textarea) => {
+      textarea.addEventListener("input", () => {
+        const limit = Number(textarea.dataset.wordLimit || 200);
+        if (countWords(textarea.value) > limit) {
+          textarea.value = trimToWordLimit(textarea.value, limit);
+        }
+        updateWhyWordCounts();
+      });
+    });
+
+    expertForm.querySelectorAll('input[type="radio"]').forEach((radio) => {
+      radio.addEventListener("change", () => {
+        updateWhyVisibility();
+      });
+    });
+
     expertForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!activeRowId) return;

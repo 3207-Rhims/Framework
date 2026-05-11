@@ -55,11 +55,17 @@ DEFAULT_COLUMNS = [
 
 FEEDBACK_EXPORT_LABELS = [
     ("recommended_pqc", "Expert Feedback: Recommended PQC"),
+    ("recommended_pqc_why", "Expert Feedback: Recommended PQC Why"),
     ("deployed_cat", "Expert Feedback: Deployed CAT"),
+    ("deployed_cat_why", "Expert Feedback: Deployed CAT Why"),
     ("cat_justification", "Expert Feedback: CAT Justification"),
+    ("cat_justification_why", "Expert Feedback: CAT Justification Why"),
     ("feasibility", "Expert Feedback: Feasibility"),
+    ("feasibility_why", "Expert Feedback: Feasibility Why"),
     ("migration_priority", "Expert Feedback: Migration Priority"),
+    ("migration_priority_why", "Expert Feedback: Migration Priority Why"),
     ("overall", "Expert Feedback: Overall"),
+    ("overall_why", "Expert Feedback: Overall Why"),
     ("comments", "Expert Feedback: Comments"),
 ]
 
@@ -95,6 +101,15 @@ FEEDBACK_COLUMN_ALIASES = {
         "Expert Comments",
     ],
 }
+
+EXPERT_FEEDBACK_WHY_FIELDS = [
+    "recommended_pqc_why",
+    "deployed_cat_why",
+    "cat_justification_why",
+    "feasibility_why",
+    "migration_priority_why",
+    "overall_why",
+]
 
 USER_MANUAL_FILES = {
     "en": "User_manual_en.pdf",
@@ -300,6 +315,22 @@ def _parse_json_body(request):
         return json.loads(request.body or "{}")
     except json.JSONDecodeError:
         return {}
+
+
+def _normalize_why_text(value, limit=200):
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    words = text.split()
+    if len(words) > limit:
+        raise ValueError(f"Why text must be {limit} words or fewer.")
+    return text
+
+
+def _conditional_why_text(rating_value, why_value):
+    if rating_value not in {"Partially appropriate", "Not appropriate"}:
+        return ""
+    return _normalize_why_text(why_value)
 
 
 def _resolve_request_weights(payload):
@@ -621,24 +652,57 @@ def expert_feedback(request, company_type, row_id):
         feedback = ExpertFeedback.objects.filter(table_row=row).first()
         data = {
             "recommended_pqc": feedback.recommended_pqc if feedback else "",
+            "recommended_pqc_why": feedback.recommended_pqc_why if feedback else "",
             "deployed_cat": feedback.deployed_cat if feedback else "",
+            "deployed_cat_why": feedback.deployed_cat_why if feedback else "",
             "cat_justification": feedback.cat_justification if feedback else "",
+            "cat_justification_why": feedback.cat_justification_why if feedback else "",
             "feasibility": feedback.feasibility if feedback else "",
+            "feasibility_why": feedback.feasibility_why if feedback else "",
             "migration_priority": feedback.migration_priority if feedback else "",
+            "migration_priority_why": feedback.migration_priority_why if feedback else "",
             "overall": feedback.overall if feedback else "",
+            "overall_why": feedback.overall_why if feedback else "",
             "comments": feedback.comments if feedback else "",
         }
         return JsonResponse({"feedback": data})
 
     payload = json.loads(request.body or "{}")
     feedback, _ = ExpertFeedback.objects.get_or_create(table_row=row)
-    feedback.recommended_pqc = payload.get("recommended_pqc", "")
-    feedback.deployed_cat = payload.get("deployed_cat", "")
-    feedback.cat_justification = payload.get("cat_justification", "")
-    feedback.feasibility = payload.get("feasibility", "")
-    feedback.migration_priority = payload.get("migration_priority", "")
-    feedback.overall = payload.get("overall", "")
-    feedback.comments = payload.get("comments", "")
+    try:
+        feedback.recommended_pqc = payload.get("recommended_pqc", "")
+        feedback.recommended_pqc_why = _conditional_why_text(
+            feedback.recommended_pqc,
+            payload.get("recommended_pqc_why", ""),
+        )
+        feedback.deployed_cat = payload.get("deployed_cat", "")
+        feedback.deployed_cat_why = _conditional_why_text(
+            feedback.deployed_cat,
+            payload.get("deployed_cat_why", ""),
+        )
+        feedback.cat_justification = payload.get("cat_justification", "")
+        feedback.cat_justification_why = _conditional_why_text(
+            feedback.cat_justification,
+            payload.get("cat_justification_why", ""),
+        )
+        feedback.feasibility = payload.get("feasibility", "")
+        feedback.feasibility_why = _conditional_why_text(
+            feedback.feasibility,
+            payload.get("feasibility_why", ""),
+        )
+        feedback.migration_priority = payload.get("migration_priority", "")
+        feedback.migration_priority_why = _conditional_why_text(
+            feedback.migration_priority,
+            payload.get("migration_priority_why", ""),
+        )
+        feedback.overall = payload.get("overall", "")
+        feedback.overall_why = _conditional_why_text(
+            feedback.overall,
+            payload.get("overall_why", ""),
+        )
+        feedback.comments = payload.get("comments", "")
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     feedback.save()
     return JsonResponse({"status": "saved"})
 

@@ -146,6 +146,11 @@
             <label><input type="radio" name="recommended_pqc" value="Partially appropriate" /></label>
             <label><input type="radio" name="recommended_pqc" value="Not appropriate" /></label>
           </div>
+          <div class="feedback-why-row" data-why-for="recommended_pqc" hidden>
+            <label for="recommended_pqc_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
+            <textarea id="recommended_pqc_why" name="recommended_pqc_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
+            <div class="feedback-word-count" data-word-count-for="recommended_pqc_why">0 / 200 words</div>
+          </div>
           <div class="feedback-row" data-criterion="deployed_cat">
             <div>
               {% if LANGUAGE_CODE == "ja" %}
@@ -157,6 +162,11 @@
             <label><input type="radio" name="deployed_cat" value="Appropriate" /></label>
             <label><input type="radio" name="deployed_cat" value="Partially appropriate" /></label>
             <label><input type="radio" name="deployed_cat" value="Not appropriate" /></label>
+          </div>
+          <div class="feedback-why-row" data-why-for="deployed_cat" hidden>
+            <label for="deployed_cat_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
+            <textarea id="deployed_cat_why" name="deployed_cat_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
+            <div class="feedback-word-count" data-word-count-for="deployed_cat_why">0 / 200 words</div>
           </div>
           <div class="feedback-row" data-criterion="cat_justification">
             <div>
@@ -170,6 +180,11 @@
             <label><input type="radio" name="cat_justification" value="Partially appropriate" /></label>
             <label><input type="radio" name="cat_justification" value="Not appropriate" /></label>
           </div>
+          <div class="feedback-why-row" data-why-for="cat_justification" hidden>
+            <label for="cat_justification_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
+            <textarea id="cat_justification_why" name="cat_justification_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
+            <div class="feedback-word-count" data-word-count-for="cat_justification_why">0 / 200 words</div>
+          </div>
           <div class="feedback-row" data-criterion="feasibility">
             <div>
               {% if LANGUAGE_CODE == "ja" %}
@@ -181,6 +196,11 @@
             <label><input type="radio" name="feasibility" value="Appropriate" /></label>
             <label><input type="radio" name="feasibility" value="Partially appropriate" /></label>
             <label><input type="radio" name="feasibility" value="Not appropriate" /></label>
+          </div>
+          <div class="feedback-why-row" data-why-for="feasibility" hidden>
+            <label for="feasibility_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
+            <textarea id="feasibility_why" name="feasibility_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
+            <div class="feedback-word-count" data-word-count-for="feasibility_why">0 / 200 words</div>
           </div>
           <div class="feedback-row" data-criterion="migration_priority">
             <div>
@@ -194,6 +214,11 @@
             <label><input type="radio" name="migration_priority" value="Partially appropriate" /></label>
             <label><input type="radio" name="migration_priority" value="Not appropriate" /></label>
           </div>
+          <div class="feedback-why-row" data-why-for="migration_priority" hidden>
+            <label for="migration_priority_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
+            <textarea id="migration_priority_why" name="migration_priority_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
+            <div class="feedback-word-count" data-word-count-for="migration_priority_why">0 / 200 words</div>
+          </div>
           <div class="feedback-row" data-criterion="overall">
             <div>
               {% if LANGUAGE_CODE == "ja" %}
@@ -205,6 +230,11 @@
             <label><input type="radio" name="overall" value="Appropriate" /></label>
             <label><input type="radio" name="overall" value="Partially appropriate" /></label>
             <label><input type="radio" name="overall" value="Not appropriate" /></label>
+          </div>
+          <div class="feedback-why-row" data-why-for="overall" hidden>
+            <label for="overall_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
+            <textarea id="overall_why" name="overall_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
+            <div class="feedback-word-count" data-word-count-for="overall_why">0 / 200 words</div>
           </div>
         </div>
         <div class="feedback-comments">
@@ -288,5 +318,5 @@
   </script>
 
   <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
-  <script src="{% static 'js/company-data.js' %}?v=20260417-action-messages-1"></script>
+  <script src="{% static 'js/company-data.js' %}?v=20260511-expert-why-2"></script>
 {% endblock %}

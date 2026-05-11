@@ -704,6 +704,46 @@ tbody tr:last-child td {
   justify-content: center;
 }
 
+.feedback-why-row {
+  margin-top: -8px;
+  margin-bottom: 4px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid #eef1f6;
+  display: grid;
+  gap: 8px;
+}
+
+.feedback-why-row[hidden] {
+  display: none;
+}
+
+.feedback-why-row label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.feedback-why-row textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.feedback-word-count {
+  text-align: right;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.feedback-word-count.is-limit {
+  color: #b45309;
+  font-weight: 700;
+}
+
 .feedback-head {
   font-weight: 700;
   border-bottom: 1px solid #e5e7eb;

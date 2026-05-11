@@ -73,11 +73,17 @@ class ExpertFeedback(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     recommended_pqc = models.CharField(max_length=32, blank=True, default="")
+    recommended_pqc_why = models.TextField(blank=True, default="")
     deployed_cat = models.CharField(max_length=32, blank=True, default="")
+    deployed_cat_why = models.TextField(blank=True, default="")
     cat_justification = models.CharField(max_length=32, blank=True, default="")
+    cat_justification_why = models.TextField(blank=True, default="")
     feasibility = models.CharField(max_length=32, blank=True, default="")
+    feasibility_why = models.TextField(blank=True, default="")
     migration_priority = models.CharField(max_length=32, blank=True, default="")
+    migration_priority_why = models.TextField(blank=True, default="")
     overall = models.CharField(max_length=32, blank=True, default="")
+    overall_why = models.TextField(blank=True, default="")
     comments = models.TextField(blank=True, default="")
 
     def __str__(self):
