@@ -75,25 +75,50 @@ FEEDBACK_COLUMN_ALIASES = {
         "Expert Feedback (Recommended PQC)",
         "Expert Feedback (Algorithm Selection)",
     ],
+    "recommended_pqc_why": [
+        "Expert Feedback: Recommended PQC Why",
+        "Expert Feedback (Recommended PQC Why)",
+        "Expert Feedback (Algorithm Selection Why)",
+    ],
     "deployed_cat": [
         "Expert Feedback: Deployed CAT",
         "Expert Feedback (Deployed CAT)",
+    ],
+    "deployed_cat_why": [
+        "Expert Feedback: Deployed CAT Why",
+        "Expert Feedback (Deployed CAT Why)",
     ],
     "cat_justification": [
         "Expert Feedback: CAT Justification",
         "Expert Feedback (CAT Justification)",
     ],
+    "cat_justification_why": [
+        "Expert Feedback: CAT Justification Why",
+        "Expert Feedback (CAT Justification Why)",
+    ],
     "feasibility": [
         "Expert Feedback: Feasibility",
         "Expert Feedback (Feasibility)",
+    ],
+    "feasibility_why": [
+        "Expert Feedback: Feasibility Why",
+        "Expert Feedback (Feasibility Why)",
     ],
     "migration_priority": [
         "Expert Feedback: Migration Priority",
         "Expert Feedback (Migration Priority)",
     ],
+    "migration_priority_why": [
+        "Expert Feedback: Migration Priority Why",
+        "Expert Feedback (Migration Priority Why)",
+    ],
     "overall": [
         "Expert Feedback: Overall",
         "Expert Feedback (Overall)",
+    ],
+    "overall_why": [
+        "Expert Feedback: Overall Why",
+        "Expert Feedback (Overall Why)",
     ],
     "comments": [
         "Expert Feedback: Comments",
@@ -331,6 +356,26 @@ def _conditional_why_text(rating_value, why_value):
     if rating_value not in {"Partially appropriate", "Not appropriate"}:
         return ""
     return _normalize_why_text(why_value)
+
+
+def _normalize_comments_text(value):
+    return str(value or "").strip()
+
+
+def _feedback_export_values(feedback):
+    return {
+        label: _clean_json_value(getattr(feedback, key, "") if feedback else "")
+        for key, label in FEEDBACK_EXPORT_LABELS
+    }
+
+
+def _feedback_export_values_from_row(row, columns):
+    columns_by_name = {column.name: column for column in columns}
+    export_values = {}
+    for key, label in FEEDBACK_EXPORT_LABELS:
+        value = _value_from_row_aliases(row, columns_by_name, FEEDBACK_COLUMN_ALIASES.get(key, [label]))
+        export_values[label] = _clean_json_value(value)
+    return export_values
 
 
 def _resolve_request_weights(payload):
@@ -700,7 +745,7 @@ def expert_feedback(request, company_type, row_id):
             feedback.overall,
             payload.get("overall_why", ""),
         )
-        feedback.comments = payload.get("comments", "")
+        feedback.comments = _normalize_comments_text(payload.get("comments", ""))
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)
     feedback.save()
@@ -830,9 +875,12 @@ def submit_table(request, company_type):
         for column in columns:
             record[column.name] = _clean_json_value(row.data.get(column.key, ""))
         feedback = feedback_map.get(row.id)
-        for key, label in FEEDBACK_EXPORT_LABELS:
-            value = getattr(feedback, key, "") if feedback else ""
-            record[label] = _clean_json_value(value)
+        export_values = (
+            _feedback_export_values(feedback)
+            if feedback
+            else _feedback_export_values_from_row(row, columns)
+        )
+        record.update(export_values)
         payload_rows.append(record)
 
     submission = Submission.objects.create(
