@@ -114,6 +114,18 @@ main {
   border-color: #ffffff;
 }
 
+.btn-policy {
+  background: linear-gradient(120deg, #15803d, #16a34a);
+  color: #ffffff;
+  border-color: #166534;
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.28);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
+}
+
+.btn-policy:hover {
+  box-shadow: 0 14px 28px rgba(21, 128, 61, 0.34);
+}
+
 .btn-outline {
   border-color: #ffffff;
   color: #ffffff;
