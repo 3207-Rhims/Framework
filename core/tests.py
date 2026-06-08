@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
-from .models import Company, CompanyType, Submission, TableColumn, TableRow
+from .models import Company, CompanyType, ExpertFeedback, Submission, TableColumn, TableRow
 
 from .algorithms import get_default_weight_config, resolve_weight_config
 
@@ -157,3 +157,36 @@ class ExpertFeedbackSubmissionTests(TestCase):
             submitted_row["Expert Feedback: Comments"],
             "Imported reviewer notes.",
         )
+
+    def test_overall_question_uses_likert_scale_and_is_saved(self):
+        response = self.client.post(
+            reverse("expert-feedback", args=[self.company_type.slug, self.row.id]),
+            data=json.dumps(
+                {
+                    "recommended_pqc": "Appropriate",
+                    "deployed_cat": "Appropriate",
+                    "feasibility": "Appropriate",
+                    "migration_priority": "Appropriate",
+                    "overall": "Strongly agree",
+                    "comments": "High confidence overall.",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        feedback = ExpertFeedback.objects.get(table_row=self.row)
+        self.assertEqual(feedback.overall, "Strongly agree")
+        self.assertEqual(feedback.overall_why, "")
+
+    def test_legacy_overall_value_is_mapped_when_modal_data_is_loaded(self):
+        ExpertFeedback.objects.create(
+            table_row=self.row,
+            overall="Appropriate",
+        )
+
+        response = self.client.get(
+            reverse("expert-feedback", args=[self.company_type.slug, self.row.id]),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["feedback"]["overall"], "Agree")

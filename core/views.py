@@ -358,6 +358,37 @@ def _conditional_why_text(rating_value, why_value):
     return _normalize_why_text(why_value)
 
 
+def _normalize_overall_feedback(value):
+    text = str(value or "").strip()
+    if not text:
+        return ""
+
+    legacy_map = {
+        "Appropriate": "Agree",
+        "Partially appropriate": "Neutral",
+        "Not appropriate": "Disagree",
+    }
+    text = legacy_map.get(text, text)
+
+    allowed = {
+        "Strongly disagree",
+        "Disagree",
+        "Neutral",
+        "Agree",
+        "Strongly agree",
+    }
+    if text not in allowed:
+        raise ValueError("Overall feedback must use the Likert scale choices.")
+    return text
+
+
+def _serialize_overall_feedback(value):
+    try:
+        return _normalize_overall_feedback(value)
+    except ValueError:
+        return ""
+
+
 def _normalize_comments_text(value):
     return str(value or "").strip()
 
@@ -706,8 +737,8 @@ def expert_feedback(request, company_type, row_id):
             "feasibility_why": feedback.feasibility_why if feedback else "",
             "migration_priority": feedback.migration_priority if feedback else "",
             "migration_priority_why": feedback.migration_priority_why if feedback else "",
-            "overall": feedback.overall if feedback else "",
-            "overall_why": feedback.overall_why if feedback else "",
+            "overall": _serialize_overall_feedback(feedback.overall) if feedback and feedback.overall else "",
+            "overall_why": "",
             "comments": feedback.comments if feedback else "",
         }
         return JsonResponse({"feedback": data})
@@ -740,11 +771,8 @@ def expert_feedback(request, company_type, row_id):
             feedback.migration_priority,
             payload.get("migration_priority_why", ""),
         )
-        feedback.overall = payload.get("overall", "")
-        feedback.overall_why = _conditional_why_text(
-            feedback.overall,
-            payload.get("overall_why", ""),
-        )
+        feedback.overall = _normalize_overall_feedback(payload.get("overall", ""))
+        feedback.overall_why = ""
         feedback.comments = _normalize_comments_text(payload.get("comments", ""))
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)

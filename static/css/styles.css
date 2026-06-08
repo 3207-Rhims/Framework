@@ -769,6 +769,45 @@ tbody tr:last-child td {
   gap: 8px;
 }
 
+.feedback-likert {
+  margin-top: 18px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 18px;
+}
+
+.feedback-likert-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.feedback-likert-head,
+.feedback-likert-row {
+  display: grid;
+  grid-template-columns: 2.2fr repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.feedback-likert-head {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.feedback-likert-row {
+  padding: 14px 0 8px;
+}
+
+.feedback-likert-head div:not(:first-child),
+.feedback-likert-row label {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
 .feedback-comments textarea {
   padding: 12px 14px;
   border-radius: 12px;

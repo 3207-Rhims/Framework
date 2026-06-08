@@ -168,23 +168,6 @@
             <textarea id="deployed_cat_why" name="deployed_cat_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
             <div class="feedback-word-count" data-word-count-for="deployed_cat_why">0 / 200 words</div>
           </div>
-          <div class="feedback-row" data-criterion="cat_justification">
-            <div>
-              {% if LANGUAGE_CODE == "ja" %}
-                PQCのNISTカテゴリ推奨は十分に正当化されている。
-              {% else %}
-                {% trans "The PQC NIST category recommendation is well justified." %}
-              {% endif %}
-            </div>
-            <label><input type="radio" name="cat_justification" value="Appropriate" /></label>
-            <label><input type="radio" name="cat_justification" value="Partially appropriate" /></label>
-            <label><input type="radio" name="cat_justification" value="Not appropriate" /></label>
-          </div>
-          <div class="feedback-why-row" data-why-for="cat_justification" hidden>
-            <label for="cat_justification_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
-            <textarea id="cat_justification_why" name="cat_justification_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
-            <div class="feedback-word-count" data-word-count-for="cat_justification_why">0 / 200 words</div>
-          </div>
           <div class="feedback-row" data-criterion="feasibility">
             <div>
               {% if LANGUAGE_CODE == "ja" %}
@@ -219,7 +202,25 @@
             <textarea id="migration_priority_why" name="migration_priority_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
             <div class="feedback-word-count" data-word-count-for="migration_priority_why">0 / 200 words</div>
           </div>
-          <div class="feedback-row" data-criterion="overall">
+        </div>
+
+        <div class="feedback-likert">
+          <div class="feedback-likert-title">
+            {% if LANGUAGE_CODE == "ja" %}
+              全体評価
+            {% else %}
+              {% trans "Overall Assessment" %}
+            {% endif %}
+          </div>
+          <div class="feedback-likert-head">
+            <div></div>
+            <div>{% if LANGUAGE_CODE == "ja" %}強く不同意{% else %}{% trans "Strongly Disagree" %}{% endif %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}不同意{% else %}{% trans "Disagree" %}{% endif %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}どちらでもない{% else %}{% trans "Neutral" %}{% endif %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}同意{% else %}{% trans "Agree" %}{% endif %}</div>
+            <div>{% if LANGUAGE_CODE == "ja" %}強く同意{% else %}{% trans "Strongly Agree" %}{% endif %}</div>
+          </div>
+          <div class="feedback-likert-row" data-criterion="overall">
             <div>
               {% if LANGUAGE_CODE == "ja" %}
                 全体として、このフレームワークの推奨は実運用において現実的かつ妥当である。
@@ -227,14 +228,11 @@
                 {% trans "Overall, the framework recommendation is practical and reasonable for deployment." %}
               {% endif %}
             </div>
-            <label><input type="radio" name="overall" value="Appropriate" /></label>
-            <label><input type="radio" name="overall" value="Partially appropriate" /></label>
-            <label><input type="radio" name="overall" value="Not appropriate" /></label>
-          </div>
-          <div class="feedback-why-row" data-why-for="overall" hidden>
-            <label for="overall_why">{% if LANGUAGE_CODE == "ja" %}理由{% else %}Why?{% endif %}</label>
-            <textarea id="overall_why" name="overall_why" rows="3" data-word-limit="200" placeholder="{% if LANGUAGE_CODE == 'ja' %}理由を入力してください（200語以内）...{% else %}Add why text (up to 200 words)...{% endif %}"></textarea>
-            <div class="feedback-word-count" data-word-count-for="overall_why">0 / 200 words</div>
+            <label><input type="radio" name="overall" value="Strongly disagree" /></label>
+            <label><input type="radio" name="overall" value="Disagree" /></label>
+            <label><input type="radio" name="overall" value="Neutral" /></label>
+            <label><input type="radio" name="overall" value="Agree" /></label>
+            <label><input type="radio" name="overall" value="Strongly agree" /></label>
           </div>
         </div>
         <div class="feedback-comments">
