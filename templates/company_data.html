@@ -115,6 +115,7 @@
       <div class="weights-status" id="weightsStatus">
         {% if LANGUAGE_CODE == "ja" %}デフォルトのシステム重みを使用中です。{% else %}Using default system weights.{% endif %}
       </div>
+      <div class="profile-notes" id="profileNotes" hidden></div>
     </div>
   </section>
 
@@ -316,5 +317,5 @@
   </script>
 
   <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
-  <script src="{% static 'js/company-data.js' %}?v=20260511-expert-why-2"></script>
+  <script src="{% static 'js/company-data.js' %}?v=20260825-profile-note-1"></script>
 {% endblock %}

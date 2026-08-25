@@ -6,7 +6,12 @@ from django.urls import reverse
 
 from .models import Company, CompanyType, ExpertFeedback, Submission, TableColumn, TableRow
 
-from .algorithms import get_default_weight_config, resolve_weight_config
+try:
+    import pandas as pd  # type: ignore
+except ImportError:  # pragma: no cover
+    pd = None
+
+from .algorithms import build_profile_recommender_notes, get_default_weight_config, resolve_weight_config
 
 
 class WeightConfigTests(SimpleTestCase):
@@ -51,6 +56,52 @@ class WeightConfigTests(SimpleTestCase):
     def test_negative_weights_raise_error(self):
         with self.assertRaisesMessage(ValueError, "cannot be negative"):
             resolve_weight_config({"device_utility": {"ram": -1}})
+
+
+class ProfileRecommenderNotesTests(SimpleTestCase):
+    def test_mlda_cat1_note_is_emitted_when_auth_best_alg_is_mldsa(self):
+        if pd is None:
+            self.skipTest("pandas is not installed")
+
+        df = pd.DataFrame(
+            [
+                {
+                    "ID": "C1",
+                    "Possible Deployed CAT": 1,
+                    "Auth_Best_Alg": "ML-DSA-44",
+                }
+            ]
+        )
+
+        notes = build_profile_recommender_notes(df)
+
+        self.assertEqual(len(notes), 1)
+        self.assertIn("C1:", notes[0])
+        self.assertIn("Tier 1 pools NIST categories 1-2", notes[0])
+        self.assertIn("ML-DSA-44", notes[0])
+
+    def test_note_is_not_emitted_for_non_mldsa_or_non_cat1(self):
+        if pd is None:
+            self.skipTest("pandas is not installed")
+
+        df = pd.DataFrame(
+            [
+                {
+                    "ID": "C1",
+                    "Possible Deployed CAT": 1,
+                    "Auth_Best_Alg": "Falcon-512",
+                },
+                {
+                    "ID": "C2",
+                    "Possible Deployed CAT": 3,
+                    "Auth_Best_Alg": "ML-DSA-44",
+                },
+            ]
+        )
+
+        notes = build_profile_recommender_notes(df)
+
+        self.assertEqual(notes, [])
 
 
 @override_settings(ALLOWED_HOSTS=["testserver", "localhost", "127.0.0.1"])

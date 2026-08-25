@@ -16,6 +16,7 @@ from django.views.decorators.http import require_http_methods
 
 from .models import Company, CompanyType, ExpertFeedback, Submission, TableColumn, TableRow
 from .algorithms import (
+    build_profile_recommender_notes,
     compute_possible_deployed_cat,
     compute_utility_scores,
     get_default_weight_config,
@@ -667,6 +668,7 @@ def profile_recommender(request, company_type):
         weight_mode, weights = _resolve_request_weights(payload)
         df = company_to_dataframe(company)
         df = compute_utility_scores(df, weights)
+        profile_notes = build_profile_recommender_notes(df)
     except (ValueError, ImportError) as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
@@ -683,7 +685,14 @@ def profile_recommender(request, company_type):
     ]
     ensure_columns(company, new_cols)
     update_rows_from_dataframe(company, df, new_cols)
-    return JsonResponse({"status": "ok", "used_weights": weights, "weight_mode": weight_mode})
+    return JsonResponse(
+        {
+            "status": "ok",
+            "used_weights": weights,
+            "weight_mode": weight_mode,
+            "profile_notes": profile_notes,
+        }
+    )
 
 
 @login_required
@@ -698,6 +707,7 @@ def utility_score(request, company_type):
         weight_mode, weights = _resolve_request_weights(payload)
         df = company_to_dataframe(company)
         df = compute_utility_scores(df, weights)
+        profile_notes = build_profile_recommender_notes(df)
     except (ValueError, ImportError) as exc:
         return JsonResponse({"error": str(exc)}, status=400)
 
@@ -714,7 +724,14 @@ def utility_score(request, company_type):
     ]
     ensure_columns(company, new_cols)
     update_rows_from_dataframe(company, df, new_cols)
-    return JsonResponse({"status": "ok", "used_weights": weights, "weight_mode": weight_mode})
+    return JsonResponse(
+        {
+            "status": "ok",
+            "used_weights": weights,
+            "weight_mode": weight_mode,
+            "profile_notes": profile_notes,
+        }
+    )
 
 
 @login_required

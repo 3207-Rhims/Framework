@@ -582,6 +582,43 @@ def _rank_mcu_sig(mcu_map, cycles_ref, bytes_ref, ram_ref, mult=1, w_cpu=0.6, w_
     return out
 
 
+def build_profile_recommender_notes(df):
+    _require_pandas()
+    notes = []
+    cat_col = _find_col_optional(df, "Possible Deployed CAT")
+    auth_best_col = _find_col_optional(df, "Auth_Best_Alg", "Auth Best Alg")
+
+    if not cat_col or not auth_best_col:
+        return notes
+
+    for _, row in df.iterrows():
+        cat_val = _safe_int_cat(row.get(cat_col))
+        auth_alg = str(row.get(auth_best_col, "") or "").strip()
+        if cat_val != 1 or not auth_alg:
+            continue
+        if "ml-dsa" not in auth_alg.lower():
+            continue
+
+        row_label = ""
+        for candidate in ("ID", "Id", "id", "Conduit Name", "Conduit_Name"):
+            col = _find_col_optional(df, candidate)
+            if col:
+                value = str(row.get(col, "") or "").strip()
+                if value:
+                    row_label = value
+                    break
+
+        prefix = f"{row_label}: " if row_label else ""
+        note = (
+            f"{prefix}Tier 1 pools NIST categories 1-2, since ML-DSA has no Category-1 set. "
+            f"{auth_alg} (Category 2) is admitted here and wins on utility."
+        )
+        if note not in notes:
+            notes.append(note)
+
+    return notes
+
+
 def compute_utility_scores(df, weight_config=None):
     _require_pandas()
     _require_numpy()

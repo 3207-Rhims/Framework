@@ -578,6 +578,21 @@ main {
   line-height: 1.5;
 }
 
+.profile-notes {
+  margin: 0 20px 20px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.profile-notes p + p {
+  margin-top: 8px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

@@ -71,6 +71,7 @@ if (tableEl) {
   const expertRowLabel = document.getElementById("expertRowLabel");
   const expertForm = document.getElementById("expertForm");
   const tableActionMessage = document.getElementById("tableActionMessage");
+  const profileNotes = document.getElementById("profileNotes");
   let activeRowId = null;
   let activeRowLabel = "";
   let tableMessageTimer = null;
@@ -87,6 +88,22 @@ if (tableEl) {
       tableActionMessage.hidden = true;
       tableActionMessage.classList.remove("is-error");
     }, 4500);
+  };
+
+  const updateProfileNotes = (notes = []) => {
+    if (!profileNotes) return;
+    const items = Array.isArray(notes)
+      ? notes.filter((note) => String(note || "").trim())
+      : [];
+    if (!items.length) {
+      profileNotes.hidden = true;
+      profileNotes.innerHTML = "";
+      return;
+    }
+    profileNotes.hidden = false;
+    profileNotes.innerHTML = items
+      .map((note) => `<p>${String(note)}</p>`)
+      .join("");
   };
 
   const openExpertModal = async (rowData) => {
@@ -522,6 +539,7 @@ if (tableEl) {
       try {
         await fetchJson(policyUrl, { method: "POST" });
         await refreshTable();
+        updateProfileNotes([]);
         showTableMessage(uiText.policyDone);
       } catch (error) {
         alert(error.message);
@@ -543,6 +561,7 @@ if (tableEl) {
         lastUsedWeights = result.used_weights || cloneValue(defaultWeightConfig);
         updateWeightStatus(result.weight_mode || activeWeightMode, lastUsedWeights);
         await refreshTable();
+        updateProfileNotes(result.profile_notes || []);
         showTableMessage(uiText.profileDone);
       } catch (error) {
         alert(error.message);
@@ -592,6 +611,7 @@ if (tableEl) {
         await fetchJson(clearUrl, { method: "POST" });
         table.setColumns([deleteColumn]);
         table.setData([]);
+        updateProfileNotes([]);
         showTableMessage(uiText.clearDone);
       } catch (error) {
         alert(error.message);
@@ -640,6 +660,7 @@ if (tableEl) {
 
         await response.json();
         await refreshTable();
+        updateProfileNotes([]);
         showTableMessage(uiText.importDone);
       });
       input.click();
