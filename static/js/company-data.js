@@ -19,8 +19,24 @@ if (tableEl) {
     document.getElementById("weight-form-config").textContent
   );
   const uiText = JSON.parse(document.getElementById("company-ui-text").textContent);
+  const isJapanese = document.documentElement.lang.toLowerCase().startsWith("ja");
+  const upmiJapanese = window.UPMIJapanese;
 
   const cloneValue = (value) => JSON.parse(JSON.stringify(value));
+
+  const localizeHeader = (title) =>
+    isJapanese && upmiJapanese ? upmiJapanese.translateHeader(title) : title;
+
+  const localizeValue = (value) =>
+    isJapanese && upmiJapanese ? upmiJapanese.translateValue(value) : value;
+
+  const localizedTextareaFormatter = (cell) => {
+    const element = document.createElement("div");
+    element.className = "upmi-localized-cell";
+    const value = localizeValue(cell.getValue());
+    element.textContent = value == null ? "" : String(value);
+    return element;
+  };
 
   const fetchJson = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -425,9 +441,15 @@ if (tableEl) {
 
     const enhanceColumns = (cols) =>
       cols.map((col) => {
+        const localizedColumn = {
+          ...col,
+          title: localizeHeader(col.title),
+          formatter:
+            col.formatter === "textarea" ? localizedTextareaFormatter : col.formatter,
+        };
         if (feedbackFields.has(col.field)) {
           return {
-            ...col,
+            ...localizedColumn,
             formatter: feedbackFormatter,
             editor: "list",
             editorParams: {
@@ -439,13 +461,13 @@ if (tableEl) {
         }
         if (col.field === "expert_comments") {
           return {
-            ...col,
+            ...localizedColumn,
             formatter: "textarea",
             editor: "textarea",
             cssClass: "feedback-comments",
           };
         }
-        return col;
+        return localizedColumn;
       });
 
     const deleteColumn = {
@@ -511,7 +533,8 @@ if (tableEl) {
       }
       table.setFilter((data) => {
         return Object.values(data).some((cell) =>
-          String(cell).toLowerCase().includes(value.toLowerCase())
+          String(cell).toLowerCase().includes(value.toLowerCase()) ||
+          String(localizeValue(cell)).toLowerCase().includes(value.toLowerCase())
         );
       });
     });

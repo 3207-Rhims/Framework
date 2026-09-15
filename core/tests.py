@@ -230,6 +230,31 @@ class ExpertFeedbackSubmissionTests(TestCase):
         self.assertEqual(feedback.overall, "Strongly agree")
         self.assertEqual(feedback.overall_why, "")
 
+    def test_japanese_table_uses_frontend_glossary_without_changing_api_headers(self):
+        TableColumn.objects.create(
+            company=self.company,
+            name="Conduit Name",
+            key="conduit-name",
+            order=2,
+        )
+        self.client.cookies["django_language"] = "ja"
+
+        page_response = self.client.get(
+            reverse("company-data", args=[self.company_type.slug])
+        )
+        self.assertEqual(page_response.status_code, 200)
+        self.assertContains(page_response, '<html lang="ja">')
+        self.assertContains(page_response, "js/upmi-ja-translations.js")
+
+        columns_response = self.client.get(
+            reverse("company-columns", args=[self.company_type.slug])
+        )
+        self.assertEqual(columns_response.status_code, 200)
+        titles = [column["title"] for column in columns_response.json()["columns"]]
+        self.assertIn("ID", titles)
+        self.assertIn("Conduit Name", titles)
+        self.assertNotIn("通信経路名", titles)
+
     def test_legacy_overall_value_is_mapped_when_modal_data_is_loaded(self):
         ExpertFeedback.objects.create(
             table_row=self.row,
