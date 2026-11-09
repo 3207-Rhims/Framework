@@ -834,7 +834,7 @@ def compute_utility_scores(df, weight_config=None):
             utils.append(u)
         return algs, utils
 
-    def softmax_probs_from_util(cell, alpha=0.01, eps=1e-12):
+    def softmax_probs_from_util(cell, alpha=0.05, eps=1e-12):
         algs, utils = parse_alg_utils(cell)
         if not algs:
             return [], np.array([])
@@ -847,7 +847,7 @@ def compute_utility_scores(df, weight_config=None):
         p = e / e.sum()
         return algs, p
 
-    def topk_confidence_string(cell, k=3, alpha=0.01, digits=6):
+    def topk_confidence_string(cell, k=3, alpha=0.05, digits=6):
         algs, p = softmax_probs_from_util(cell, alpha=alpha)
         if len(algs) == 0:
             return np.nan
@@ -855,10 +855,10 @@ def compute_utility_scores(df, weight_config=None):
         return ", ".join([f"{a}:{v:.{digits}f}" for a, v in items])
 
     df["Enc_Confidence_Top3"] = df["Enc_Ranking_By_Utility"].apply(
-        lambda x: topk_confidence_string(x, k=3, alpha=0.01)
+        lambda x: topk_confidence_string(x, k=3, alpha=0.05)
     )
     df["Auth_Confidence_Top3"] = df["Auth_Ranking_By_Utility"].apply(
-        lambda x: topk_confidence_string(x, k=3, alpha=0.01, digits=6)
+        lambda x: topk_confidence_string(x, k=3, alpha=0.05, digits=6)
     )
 
     # Migration priority
