@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -12,6 +13,44 @@ except ImportError:  # pragma: no cover
     pd = None
 
 from .algorithms import build_profile_recommender_notes, get_default_weight_config, resolve_weight_config
+from .views import parse_xlsx
+
+
+class SpreadsheetImportTests(SimpleTestCase):
+    def test_bundled_sample_trims_formatted_empty_rows_and_columns(self):
+        sample_path = (
+            Path(__file__).resolve().parents[1]
+            / "Algoritthm implementation"
+            / "data"
+            / "Smart Grid.xlsx"
+        )
+
+        parsed = parse_xlsx(sample_path)
+
+        self.assertEqual(len(parsed["headers"]), 33)
+        self.assertEqual(len(parsed["rows"]), 16)
+        self.assertEqual(parsed["headers"][-1], "Migration_Priority")
+        self.assertEqual(parsed["rows"][0][0], "C1")
+        self.assertEqual(parsed["rows"][-1][0], "C16")
+
+
+@override_settings(ALLOWED_HOSTS=["testserver"])
+class SampleDataTests(TestCase):
+    def test_load_sample_uses_simulation_workbook(self):
+        user = get_user_model().objects.create_user(
+            username="sample-user",
+            password="strong-pass-123",
+        )
+        self.client.force_login(user)
+        company_type = CompanyType.objects.create(name="Retail", slug="retail")
+
+        response = self.client.post(reverse("load-sample-data", args=[company_type.slug]))
+
+        self.assertEqual(response.status_code, 200)
+        company = Company.objects.get(user=user, company_type=company_type)
+        self.assertEqual(company.columns.count(), 33)
+        self.assertEqual(company.rows.count(), 16)
+        self.assertEqual(company.columns.last().name, "Migration_Priority")
 
 
 class WeightConfigTests(SimpleTestCase):
