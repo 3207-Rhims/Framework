@@ -849,7 +849,15 @@ def load_sample_data(request, company_type):
     sample_csv = base_dir / "Smart Grid - Sheet1 (4).csv"
     sample_xlsx = base_dir / "Smart Grid.xlsx"
 
-    if sample_xlsx.exists():
+    if sample_csv.exists():
+        with sample_csv.open("r", encoding="utf-8-sig", errors="ignore") as handle:
+            reader = csv.reader(handle)
+            rows = list(reader)
+        if not rows:
+            return JsonResponse({"error": "Sample dataset is empty."}, status=400)
+        headers = [str(cell).strip() for cell in rows[0]]
+        data_rows = rows[1:]
+    elif sample_xlsx.exists():
         parsed = parse_xlsx(sample_xlsx)
         if parsed is None:
             return JsonResponse(
@@ -858,14 +866,6 @@ def load_sample_data(request, company_type):
             )
         headers = parsed["headers"]
         data_rows = parsed["rows"]
-    elif sample_csv.exists():
-        with sample_csv.open("r", encoding="utf-8", errors="ignore") as handle:
-            reader = csv.reader(handle)
-            rows = list(reader)
-        if not rows:
-            return JsonResponse({"error": "Sample dataset is empty."}, status=400)
-        headers = [str(cell).strip() for cell in rows[0]]
-        data_rows = rows[1:]
     else:
         return JsonResponse({"error": "Sample dataset not found."}, status=404)
 

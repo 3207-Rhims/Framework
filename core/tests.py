@@ -36,7 +36,7 @@ class SpreadsheetImportTests(SimpleTestCase):
 
 @override_settings(ALLOWED_HOSTS=["testserver"])
 class SampleDataTests(TestCase):
-    def test_load_sample_uses_simulation_workbook(self):
+    def test_load_sample_uses_simulation_csv(self):
         user = get_user_model().objects.create_user(
             username="sample-user",
             password="strong-pass-123",
@@ -48,9 +48,9 @@ class SampleDataTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         company = Company.objects.get(user=user, company_type=company_type)
-        self.assertEqual(company.columns.count(), 33)
+        self.assertEqual(company.columns.count(), 23)
         self.assertEqual(company.rows.count(), 16)
-        self.assertEqual(company.columns.last().name, "Migration_Priority")
+        self.assertEqual(company.columns.last().name, "Vendor Support of PQC")
 
 
 class WeightConfigTests(SimpleTestCase):
